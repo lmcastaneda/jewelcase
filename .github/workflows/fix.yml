@@ -119,6 +119,11 @@ jobs:
             --permission-mode acceptEdits
             --allowedTools "Read,Edit,Write,Grep,Glob,Bash(uv run pytest:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*),Bash(gh issue view:*)"
             --disallowedTools "Read(//proc/**)"
+      - name: If Claude's step failed, say why
+        if: failure()
+        run: |
+          jq -r '[.[]? | select(.type == "result")] | last | .result // "no message"' \
+            "$RUNNER_TEMP/claude-execution-output.json" 2>/dev/null | head -c 2000 || true
       - name: Pack what Claude made
         if: always()
         run: |

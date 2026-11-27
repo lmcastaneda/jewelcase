@@ -167,6 +167,11 @@ jobs:
             --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*)"
             --disallowedTools "Read(//proc/**)"
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["approve","reject"]},"reasons":{"type":"array","items":{"type":"string"}},"summary":{"type":"string"}},"required":["verdict","reasons","summary"]}'
+      - name: If Claude's step failed, say why
+        if: failure()
+        run: |
+          jq -r '[.[]? | select(.type == "result")] | last | .result // "no message"' \
+            "$RUNNER_TEMP/claude-execution-output.json" 2>/dev/null | head -c 2000 || true
 
   merge:
     needs: [rules, review]
