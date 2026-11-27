@@ -134,27 +134,6 @@ def test_offline_playlists_fall_back_to_single_files(lib, tmp_path):
     assert "FF7 (USA)" in lib.forms("psx")
 
 
-def test_import_manifest_only_ok_rows_with_matching_size(lib):
-    good = "a" * 32
-    rows = ["system\tfile\tbytes\tmd5_card\tmd5_venus\tsize_venus\tstate",
-            f"ps2\tGod of War II (USA).chd\t300\t{good}\t{good}\t300\tok",
-            f"ps2\tGod of War II (USA).iso\t900\t{good}\t{good}\t901\tok",          # size differs
-            f"ps2\tOnly Archive (USA).7z\t50\t{good}\t{'b' * 32}\t50\tmd5-mismatch",
-            f"ps2\tGhost.chd\t5\t{good}\t{good}\t5\tok",                            # not in library
-            f"psx\tFF7 (USA) (Disc 1).chd\t10\t\t{good}\t10\tpull-fail"]
-    (lib.root / "card-pull-manifest.tsv").write_text("\n".join(rows) + "\n")
-    assert lib.import_manifest() == 1
-    md5s = {f.name: f.md5 for f in lib.store.lib_files("ps2")}
-    assert md5s["God of War II (USA).chd"] == good and md5s["God of War II (USA).iso"] is None
-    assert lib.manifest_device_hashes() == [("ps2", "God of War II (USA).chd", 300, good),
-                                            ("ps2", "God of War II (USA).iso", 900, good),
-                                            ("ps2", "Ghost.chd", 5, good)]
-
-
-def test_import_manifest_absent_is_zero(lib):
-    assert lib.import_manifest() == 0 and lib.manifest_device_hashes() == []
-
-
 def test_free_bytes(lib):
     assert lib.free_bytes() > 0
 

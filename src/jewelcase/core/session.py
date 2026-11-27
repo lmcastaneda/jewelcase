@@ -177,8 +177,6 @@ class Session:
         self.library.scan()
         if self.device is not None:
             try:
-                if self.serial:
-                    catalog.seed_from_manifest(self.library, self.store, self.serial)
                 catalog.refresh_device(self.device, self.profile, self.store, self.library.systems())
             except DeviceGone:
                 self.device = None

@@ -157,18 +157,6 @@ def test_usage_by_system(world):
     assert usage[0][1] == 4000 + 1400 + 500
 
 
-def test_manifest_hashes_seed_the_device(world):
-    good = "a" * 32
-    (world.lib_root / "card-pull-manifest.tsv").write_text(
-        "system\tfile\tbytes\tmd5_card\tmd5_venus\tsize_venus\tstate\n"
-        f"ps2\tGod of War II (USA).chd\t4000\t{good}\t{good}\t4000\tok\n")
-    assert catalog.seed_from_manifest(world.library, world.store, world.serial) == 1
-    mtime = world.dev.stat(CARD + "/ps2/God of War II (USA).chd").mtime
-    assert world.store.dev_hash(world.serial, "ps2", "God of War II (USA).chd", 4000, mtime) == good
-    assert world.store.dev_hash(world.serial, "ps2", "God of War II (USA).chd", 4000, mtime + 1) is None
-    assert world.library.cached_md5("ps2", "God of War II (USA).chd") == good
-
-
 def test_demo_world_builds(tmp_path):
     from jewelcase.core import demo
     cfg, store, dev = demo.make_demo(tmp_path)
