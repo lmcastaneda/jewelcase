@@ -1,7 +1,6 @@
 """The game library on the PC: an index of names and sizes, with hashes filled in only when needed."""
 from __future__ import annotations
 
-import csv
 import hashlib
 import re
 import shutil
@@ -14,7 +13,6 @@ from .device import Progress, md5_file
 from .games import Unit, group_units
 from .systems import System
 
-MANIFEST = "card-pull-manifest.tsv"
 
 
 class ToolMissing(Exception):
@@ -167,47 +165,6 @@ class Library:
         self.store.replace_lib_files(system, [f for f in self.store.lib_files(system) if f.name != name])
         self._index.pop(system, None)
         self._units.pop(system, None)
-
-    # ------------------------------------------------------------ manifest
-    def _manifest_rows(self) -> list[dict]:
-        if not self.root:
-            return []
-        try:
-            with open(self.root / MANIFEST, newline="", encoding="utf-8") as f:
-                return list(csv.DictReader(f, delimiter="\t"))
-        except OSError:
-            return []
-
-    def import_manifest(self) -> int:
-        """Take verified library hashes from a card-pull-manifest.tsv. Never writes that file."""
-        used = 0
-        applied = set(self.store.meta("", "manifest_applied", []))
-        before = len(applied)
-        for r in self._manifest_rows():
-            md5 = (r.get("md5_venus") or "").strip()
-            if r.get("state") != "ok" or not md5 or md5 != (r.get("md5_card") or "").strip():
-                continue
-            known = self._files(r.get("system", "")).get(r.get("file", ""))
-            if known and str(known.size) == (r.get("size_venus") or "").strip():
-                key = f"{known.system}/{known.name}"
-                # once per file, and never over a hash we computed or one cleared because the file changed
-                if key not in applied:
-                    applied.add(key)
-                    if known.md5 is None:
-                        self.store.set_lib_md5(known.system, known.name, known.size, known.mtime_ns, md5)
-                used += 1
-        if len(applied) != before:
-            self.store.set_meta("", "manifest_applied", sorted(applied))
-            self.invalidate()
-        return used
-
-    def manifest_device_hashes(self) -> list[tuple[str, str, int, str]]:
-        out = []
-        for r in self._manifest_rows():
-            md5 = (r.get("md5_card") or "").strip()
-            if r.get("state") == "ok" and re.fullmatch(r"[0-9a-f]{32}", md5) and (r.get("bytes") or "").isdigit():
-                out.append((r["system"], r["file"], int(r["bytes"]), md5))
-        return out
 
 
 def pick_device_form(system: System, forms: list[Unit], on_device_exts: set[str]) -> Unit | None:

@@ -62,34 +62,6 @@ def test_unchanged_files_are_still_proven_from_the_record(world):
     assert not any(what == "md5" for what, _ in world.dev.calls)
 
 
-def manifest(world, md5):
-    (world.lib_root / "card-pull-manifest.tsv").write_text(
-        "system\tfile\tbytes\tmd5_card\tmd5_venus\tsize_venus\tstate\n"
-        f"ps2\t{GOW_FILE}\t4000\t{md5}\t{md5}\t4000\tok\n")
-
-
-def test_manifest_hash_is_not_restamped_after_the_file_changes(world):
-    good = hashlib.md5(b"gow2" * 1000).hexdigest()
-    manifest(world, good)
-    assert catalog.seed_from_manifest(world.library, world.store, world.serial) == 1
-    assert twin(world, "ps2", GOW_FILE).how == "record"
-    bump(world.lib_root / "ps2" / GOW_FILE, b"ZZZZ" * 1000)
-    world.refresh()
-    catalog.seed_from_manifest(world.library, world.store, world.serial)
-    assert world.library.cached_md5("ps2", GOW_FILE) != good
-    assert twin(world, "ps2", GOW_FILE).ok is False
-
-
-def test_manifest_device_hash_is_not_restamped_after_the_device_file_changes(world):
-    good = hashlib.md5(b"gow2" * 1000).hexdigest()
-    manifest(world, good)
-    catalog.seed_from_manifest(world.library, world.store, world.serial)
-    bump(world.dev_path("ps2", GOW_FILE), b"XXXX" * 1000)
-    world.refresh()
-    assert catalog.seed_from_manifest(world.library, world.store, world.serial) == 0
-    assert twin(world, "ps2", GOW_FILE).ok is False
-
-
 # ---------------------------------------------------------------- 2. resume
 def pause_at_first_delete(h):
     def hook(event):

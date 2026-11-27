@@ -197,26 +197,6 @@ def refresh_device(dev: Device, profile: Profile, store: Store, library_systems:
             store.upsert_stats(serial, folder, stem, Stats(plays, seconds, last, name))
 
 
-def seed_from_manifest(library: Library, store: Store, serial: str) -> int:
-    """Use an existing card-pull-manifest.tsv as already-verified hashes for both sides."""
-    library.import_manifest()
-    seeded = set(store.meta(serial, "manifest_seeded", []))
-    on_device = {(system, _name(f.path)): f for system, files in store.snapshot(serial).items() for f in files}
-    n = 0
-    for system, name, size, md5 in library.manifest_device_hashes():
-        key = f"{system}/{name}"
-        f = on_device.get((system, name))
-        # once per file: a file that changes afterwards is hashed again, never re-stamped from the manifest
-        if key in seeded or f is None or f.size != size:
-            continue
-        seeded.add(key)
-        store.set_dev_hash(serial, system, name, size, f.mtime, md5)
-        n += 1
-    if n:
-        store.set_meta(serial, "manifest_seeded", sorted(seeded))
-    return n
-
-
 def files_missing_from_library(row: "GameRow", library: Library) -> list[str]:
     """Device files of a game for which the library has neither the same file nor an archive of it."""
     if not row.dev_unit:
