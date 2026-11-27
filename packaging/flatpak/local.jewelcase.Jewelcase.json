@@ -1,0 +1,65 @@
+{
+  "app-id": "local.jewelcase.Jewelcase",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "26.08",
+  "sdk": "org.freedesktop.Sdk",
+  "command": "jewelcase",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=all",
+    "--share=network",
+    "--filesystem=home",
+    "--filesystem=/mnt",
+    "--filesystem=/media",
+    "--filesystem=/run/media",
+    "--talk-name=org.freedesktop.Notifications"
+  ],
+  "modules": [
+    {
+      "name": "jewelcase",
+      "buildsystem": "simple",
+      "build-options": {
+        "strip": false,
+        "no-debuginfo": true
+      },
+      "build-commands": [
+        "chmod +x Jewelcase-x86_64.AppImage",
+        "./Jewelcase-x86_64.AppImage --appimage-extract",
+        "mkdir -p /app/lib /app/bin",
+        "cp -a squashfs-root/usr/bin/jewelcase /app/lib/jewelcase",
+        "install -Dm755 jewelcase-launcher /app/bin/jewelcase",
+        "install -Dm644 local.jewelcase.Jewelcase.svg /app/share/icons/hicolor/scalable/apps/local.jewelcase.Jewelcase.svg",
+        "install -Dm644 local.jewelcase.Jewelcase.desktop /app/share/applications/local.jewelcase.Jewelcase.desktop",
+        "install -Dm644 local.jewelcase.Jewelcase.metainfo.xml /app/share/metainfo/local.jewelcase.Jewelcase.metainfo.xml"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "path": "../../dist/Jewelcase-x86_64.AppImage"
+        },
+        {
+          "type": "script",
+          "dest-filename": "jewelcase-launcher",
+          "commands": [
+            "exec /app/lib/jewelcase/jewelcase \"$@\""
+          ]
+        },
+        {
+          "type": "file",
+          "path": "../../src/jewelcase/data/jewelcase.svg",
+          "dest-filename": "local.jewelcase.Jewelcase.svg"
+        },
+        {
+          "type": "file",
+          "path": "local.jewelcase.Jewelcase.desktop"
+        },
+        {
+          "type": "file",
+          "path": "local.jewelcase.Jewelcase.metainfo.xml"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,788 @@
+# BIOS and firmware files Jewelcase recognises, by size and md5 checksum. Only names, sizes and checksums are
+# listed here, never the files themselves.
+#
+# What comes from where:
+# - The file names, sizes and md5 checksums are from libretro's public list of system files, System.dat
+#   (libretro-database, v1.19.0, clrmamepro format), cut down to the systems Jewelcase knows.
+#   libretro-database is published under CC BY-SA 4.0 (https://github.com/libretro/libretro-database).
+# - Everything else is Jewelcase's own and was written by hand: which systems are listed, `need`, `note`,
+#   `also_for`, the `hints` and `hint_sizes`, the `role` of each file, and the [[firmware]] entry for PS3.
+#
+# need = "needed": games of the system do not run without these files
+# need = "optional": games run without them; the files only improve the result
+# role: files of one system with the same role are alternatives of each other (one is enough: PlayStation
+#       models and regions, Saturn regions); different roles are all wanted (Dreamcast: a boot file and a
+#       flash file; Nintendo DS: the ARM7 BIOS, the ARM9 BIOS and the firmware). A system is "Verified"
+#       when every role has a verified file, "Incomplete" when only some do. A file with no role belongs
+#       to the role "". Where it is not certain that files go together they all share one role.
+# hints: a file with a name like one of these and one of the hint_sizes, but a checksum not listed, is
+#        reported as "found, not recognised" (a valid dump the list does not know). Hints need hint_sizes.
+#
+# Add your own entries in ~/.config/jewelcase/bios.toml using the same shape: a [[system]] with the same
+# folder adds its files to the ones here (a file without a role joins the system's first role).
+
+[[system]]
+folder = "psx"
+need = "needed"
+note = ""
+hints = ["scph*", "psxonpsp*", "ps1_rom*"]
+hint_sizes = [524288]
+[[system.file]]
+name = "scph1000.bin"
+size = 524288
+md5 = "239665b1a3dade1b5a52c06338011044"
+[[system.file]]
+name = "scph1001.bin"
+size = 524288
+md5 = "924e392ed05558ffdb115408c263dccf"
+[[system.file]]
+name = "scph1002.bin"
+size = 524288
+md5 = "54847e693405ffeb0359c6287434cbef"
+[[system.file]]
+name = "scph100.bin"
+size = 524288
+md5 = "8abc1b549a4a80954addc48ef02c4521"
+[[system.file]]
+name = "scph101.bin"
+size = 524288
+md5 = "6e3735ff4c7dc899ee98981385f6f3d0"
+[[system.file]]
+name = "scph102A.bin"
+size = 524288
+md5 = "b10f5e0e3d9eb60e5159690680b1e774"
+[[system.file]]
+name = "scph102B.bin"
+size = 524288
+md5 = "de93caec13d1a141a40a79f5c86168d6"
+[[system.file]]
+name = "scph102C.bin"
+size = 524288
+md5 = "de93caec13d1a141a40a79f5c86168d6"
+[[system.file]]
+name = "scph3000.bin"
+size = 524288
+md5 = "849515939161e62f6b866f6853006780"
+[[system.file]]
+name = "scph3500.bin"
+size = 524288
+md5 = "cba733ceeff5aef5c32254f1d617fa62"
+[[system.file]]
+name = "scph5000.bin"
+size = 524288
+md5 = "eb201d2d98251a598af467d4347bb62f"
+[[system.file]]
+name = "scph5500.bin"
+size = 524288
+md5 = "8dd7d5296a650fac7319bce665a6a53c"
+[[system.file]]
+name = "scph5501.bin"
+size = 524288
+md5 = "490f666e1afb15b7362b406ed1cea246"
+[[system.file]]
+name = "scph5502.bin"
+size = 524288
+md5 = "32736f17079d0b2b7024407c39bd3050"
+[[system.file]]
+name = "scph5552.bin"
+size = 524288
+md5 = "32736f17079d0b2b7024407c39bd3050"
+[[system.file]]
+name = "scph7001.bin"
+size = 524288
+md5 = "1e68c231d0896b7eadcad1d7d8e76129"
+[[system.file]]
+name = "scph7002.bin"
+size = 524288
+md5 = "b9d9a0286c33dc6b7237bb13cd46fdee"
+[[system.file]]
+name = "scph7003.bin"
+size = 524288
+md5 = "490f666e1afb15b7362b406ed1cea246"
+[[system.file]]
+name = "scph7502.bin"
+size = 524288
+md5 = "b9d9a0286c33dc6b7237bb13cd46fdee"
+[[system.file]]
+name = "scph9002(7502).bin"
+size = 524288
+md5 = "b9d9a0286c33dc6b7237bb13cd46fdee"
+[[system.file]]
+name = "psxonpsp660.bin"
+size = 524288
+md5 = "c53ca5908936d412331790f4426c6c33"
+[[system.file]]
+name = "ps1_rom.bin"
+size = 524288
+md5 = "81bbe60ba7a3d1cea1d48c14cbcc647b"
+
+[[system]]
+folder = "ps2"
+need = "needed"
+note = ""
+hints = ["scph*", "ps2-*", "*.rom0", "*.rom1"]
+hint_sizes = [4194304]
+[[system.file]]
+name = "ps2-0100jd-20000117.bin"
+size = 4194304
+md5 = "32f2e4d5ff5ee11072a6bc45530f5765"
+[[system.file]]
+name = "ps2-0100j-20000117.bin"
+size = 4194304
+md5 = "acf4730ceb38ac9d8c7d8e21f2614600"
+[[system.file]]
+name = "ps2-0101jd-20000217.bin"
+size = 4194304
+md5 = "acf9968c8f596d2b15f42272082513d1"
+[[system.file]]
+name = "ps2-0101j-20000217.bin"
+size = 4194304
+md5 = "b1459d7446c69e3e97e6ace3ae23dd1c"
+[[system.file]]
+name = "ps2-0101xd-20000224.bin"
+size = 4194304
+md5 = "d3f1853a16c2ec18f3cd1ae655213308"
+[[system.file]]
+name = "ps2-0110ad-20000727.bin"
+size = 4194304
+md5 = "63e6fd9b3c72e0d7b920e80cf76645cd"
+[[system.file]]
+name = "ps2-0110a-20000727.bin"
+size = 4194304
+md5 = "a20c97c02210f16678ca3010127caf36"
+[[system.file]]
+name = "ps2-0120a-20000902.bin"
+size = 4194304
+md5 = "8db2fbbac7413bf3e7154c1e0715e565"
+[[system.file]]
+name = "ps2-0120ed-20000902.bin"
+size = 4194304
+md5 = "91c87cb2f2eb6ce529a2360f80ce2457"
+[[system.file]]
+name = "ps2-0120ed-20000902-20030110.bin"
+size = 4194304
+md5 = "3016b3dd42148a67e2c048595ca4d7ce"
+[[system.file]]
+name = "ps2-0120e-20000902.bin"
+size = 4194304
+md5 = "b7fa11e87d51752a98b38e3e691cbf17"
+[[system.file]]
+name = "ps2-0120j-20001027-185015.bin"
+size = 4194304
+md5 = "f63bc530bd7ad7c026fcd6f7bd0d9525"
+[[system.file]]
+name = "ps2-0120j-20001027-191435.bin"
+size = 4194304
+md5 = "cee06bd68c333fc5768244eae77e4495"
+[[system.file]]
+name = "ps2-0150ad-20001228-20030520.bin"
+size = 4194304
+md5 = "0bf988e9c7aaa4c051805b0fa6eb3387"
+[[system.file]]
+name = "ps2-0150a-20001228.bin"
+size = 4194304
+md5 = "8accc3c49ac45f5ae2c5db0adc854633"
+[[system.file]]
+name = "ps2-0150ed-20001228-20030520.bin"
+size = 4194304
+md5 = "6f9a6feb749f0533aaae2cc45090b0ed"
+[[system.file]]
+name = "ps2-0150e-20001228.bin"
+size = 4194304
+md5 = "838544f12de9b0abc90811279ee223c8"
+[[system.file]]
+name = "ps2-0150jd-20010118.bin"
+size = 4194304
+md5 = "bb6bbc850458fff08af30e969ffd0175"
+[[system.file]]
+name = "ps2-0150j-20010118.bin"
+size = 4194304
+md5 = "815ac991d8bc3b364696bead3457de7d"
+[[system.file]]
+name = "ps2-0160a-20010427.bin"
+size = 4194304
+md5 = "b107b5710042abe887c0f6175f6e94bb"
+[[system.file]]
+name = "ps2-0160j-20010427.bin"
+size = 4194304
+md5 = "ab55cceea548303c22c72570cfd4dd71"
+[[system.file]]
+name = "ps2-0160a-20010704.bin"
+size = 4194304
+md5 = "18bcaadb9ff74ed3add26cdf709fff2e"
+[[system.file]]
+name = "ps2-0160e-20010704.bin"
+size = 4194304
+md5 = "491209dd815ceee9de02dbbc408c06d6"
+[[system.file]]
+name = "ps2-0160a-20011004.bin"
+size = 4194304
+md5 = "7200a03d51cacc4c14fcdfdbc4898431"
+[[system.file]]
+name = "ps2-0160e-20011004.bin"
+size = 4194304
+md5 = "8359638e857c8bc18c3c18ac17d9cc3c"
+[[system.file]]
+name = "ps2-0160h-20010730.bin"
+size = 4194304
+md5 = "352d2ff9b3f68be7e6fa7e6dd8389346"
+[[system.file]]
+name = "ps2-0160a-20020207.bin"
+size = 4194304
+md5 = "d5ce2c7d119f563ce04bc04dbc3a323e"
+[[system.file]]
+name = "ps2-0160e-20020319.bin"
+size = 4194304
+md5 = "0d2228e6fd4fb639c9c39d077a9ec10c"
+[[system.file]]
+name = "ps2-0160j-20020426.bin"
+size = 4194304
+md5 = "72da56fccb8fcd77bba16d1b6f479914"
+[[system.file]]
+name = "ps2-0160e-20020426.bin"
+size = 4194304
+md5 = "5b1f47fbeb277c6be2fccdd6344ff2fd"
+[[system.file]]
+name = "ps2-0160h-20020426.bin"
+size = 4194304
+md5 = "315a4003535dfda689752cb25f24785c"
+[[system.file]]
+name = "ps2-0170j-20030206.bin"
+size = 4194304
+md5 = "312ad4816c232a9606e56f946bc0678a"
+[[system.file]]
+name = "ps2-0170ed-20030227.bin"
+size = 4194304
+md5 = "666018ffec65c5c7e04796081295c6c7"
+[[system.file]]
+name = "ps2-0170e-20030227.bin"
+size = 4194304
+md5 = "6e69920fa6eef8522a1d688a11e41bc6"
+[[system.file]]
+name = "ps2-0170ad-20030325.bin"
+size = 4194304
+md5 = "eb960de68f0c0f7f9fa083e9f79d0360"
+[[system.file]]
+name = "ps2-0170a-20030325.bin"
+size = 4194304
+md5 = "8aa12ce243210128c5074552d3b86251"
+[[system.file]]
+name = "ps2-0180cd-20030224.bin"
+size = 4194304
+md5 = "240d4c5ddd4b54069bdc4a3cd2faf99d"
+[[system.file]]
+name = "ps2-0180j-20031028.bin"
+size = 4194304
+md5 = "1c6cd089e6c83da618fbf2a081eb4888"
+[[system.file]]
+name = "ps2-0190j-20030623.bin"
+size = 4194304
+md5 = "463d87789c555a4a7604e97d7db545d1"
+[[system.file]]
+name = "ps2-0190a-20030623.bin"
+size = 4194304
+md5 = "35461cecaa51712b300b2d6798825048"
+[[system.file]]
+name = "ps2-0190e-20030623.bin"
+size = 4194304
+md5 = "bd6415094e1ce9e05daabe85de807666"
+[[system.file]]
+name = "ps2-0190h-20030623.bin"
+size = 4194304
+md5 = "2e70ad008d4ec8549aada8002fdf42fb"
+[[system.file]]
+name = "ps2-0190r-20030623.bin"
+size = 4194304
+md5 = "b53d51edc7fc086685e31b811dc32aad"
+[[system.file]]
+name = "ps2-0190c-20030623.bin"
+size = 4194304
+md5 = "1b6e631b536247756287b916f9396872"
+[[system.file]]
+name = "ps2-0190j-20030822.bin"
+size = 4194304
+md5 = "00da1b177096cfd2532c8fa22b43e667"
+[[system.file]]
+name = "ps2-0190e-20030822.bin"
+size = 4194304
+md5 = "afde410bd026c16be605a1ae4bd651fd"
+[[system.file]]
+name = "ps2-0190a-20040329.bin"
+size = 4194304
+md5 = "81f4336c1de607dd0865011c0447052e"
+[[system.file]]
+name = "ps2-0200j-20040614.bin"
+size = 4194304
+md5 = "0eee5d1c779aa50e94edd168b4ebf42e"
+[[system.file]]
+name = "ps2-0200a-20040614.bin"
+size = 4194304
+md5 = "d333558cc14561c1fdc334c75d5f37b7"
+[[system.file]]
+name = "ps2-0200e-20040614.bin"
+size = 4194304
+md5 = "dc752f160044f2ed5fc1f4964db2a095"
+[[system.file]]
+name = "ps2-0200ed-20040614.bin"
+size = 4194304
+md5 = "63ead1d74893bf7f36880af81f68a82d"
+[[system.file]]
+name = "ps2-0200h-20040614.bin"
+size = 4194304
+md5 = "3e3e030c0f600442fa05b94f87a1e238"
+[[system.file]]
+name = "ps2-0210j-20040917.bin"
+size = 4194304
+md5 = "1ad977bb539fc9448a08ab276a836bbc"
+[[system.file]]
+name = "ps2-0220j-20050620.bin"
+size = 4194304
+md5 = "eb4f40fcf4911ede39c1bbfe91e7a89a"
+[[system.file]]
+name = "ps2-0220ad-20050620.bin"
+size = 4194304
+md5 = "9959ad7a8685cad66206e7752ca23f8b"
+[[system.file]]
+name = "ps2-0220a-20050620.bin"
+size = 4194304
+md5 = "929a14baca1776b00869f983aa6e14d2"
+[[system.file]]
+name = "ps2-0220e-20050620.bin"
+size = 4194304
+md5 = "573f7d4a430c32b3cc0fd0c41e104bbd"
+[[system.file]]
+name = "ps2-0220h-20050620.bin"
+size = 4194304
+md5 = "df63a604e8bff5b0599bd1a6c2721bd0"
+[[system.file]]
+name = "ps2-0220j-20060210.bin"
+size = 4194304
+md5 = "5b1ba4bb914406fae75ab8e38901684d"
+[[system.file]]
+name = "ps2-0220a-20060210.bin"
+size = 4194304
+md5 = "cb801b7920a7d536ba07b6534d2433ca"
+[[system.file]]
+name = "ps2-0220e-20060210.bin"
+size = 4194304
+md5 = "af60e6d1a939019d55e5b330d24b1c25"
+[[system.file]]
+name = "ps2-0220h-20060210.bin"
+size = 4194304
+md5 = "549a66d0c698635ca9fa3ab012da7129"
+[[system.file]]
+name = "ps2-0220j-20060905.bin"
+size = 4194304
+md5 = "5de9d0d730ff1e7ad122806335332524"
+[[system.file]]
+name = "ps2-0220ad-20060905.bin"
+size = 4194304
+md5 = "21fe4cad111f7dc0f9af29477057f88d"
+[[system.file]]
+name = "ps2-0220a-20060905.bin"
+size = 4194304
+md5 = "40c11c063b3b9409aa5e4058e984e30c"
+[[system.file]]
+name = "ps2-0220e-20060905.bin"
+size = 4194304
+md5 = "80bbb237a6af9c611df43b16b930b683"
+[[system.file]]
+name = "ps2-0220h-20060905.bin"
+size = 4194304
+md5 = "c37bce95d32b2be480f87dd32704e664"
+[[system.file]]
+name = "ps2-0230j-20080220.bin"
+size = 4194304
+md5 = "80ac46fa7e77b8ab4366e86948e54f83"
+[[system.file]]
+name = "ps2-0230a-20080220.bin"
+size = 4194304
+md5 = "21038400dc633070a78ad53090c53017"
+[[system.file]]
+name = "ps2-0230e-20080220.bin"
+size = 4194304
+md5 = "dc69f0643a3030aaa4797501b483d6c4"
+[[system.file]]
+name = "ps2-0230h-20080220.bin"
+size = 4194304
+md5 = "30d56e79d89fbddf10938fa67fe3f34e"
+[[system.file]]
+name = "ps2-0250e-20100415.bin"
+size = 4194304
+md5 = "93ea3bcee4252627919175ff1b16a1d9"
+[[system.file]]
+name = "ps2-0250j-20100415.bin"
+size = 4194304
+md5 = "d3e81e95db25f5a86a7b7474550a2155"
+
+[[system]]
+folder = "dreamcast"
+need = "needed"
+note = ""
+hints = ["dc_boot*", "boot.bin", "flash.bin"]
+hint_sizes = [2097152, 131072]
+[[system.file]]
+name = "dc_boot.bin"
+size = 2097152
+md5 = "e10c53c2f8b90bab96ead2d368858623"
+role = "boot"
+[[system.file]]
+name = "boot.bin"
+size = 2097152
+md5 = "e10c53c2f8b90bab96ead2d368858623"
+role = "boot"
+[[system.file]]
+name = "flash.bin"
+size = 131072
+md5 = "0a93f7940c455905bea6e392dfde92a4"
+role = "flash"
+
+[[system]]
+folder = "saturn"
+need = "needed"
+note = ""
+hints = ["saturn_bios*", "sega_*", "mpr-*"]
+hint_sizes = [524288]
+[[system.file]]
+name = "hisaturn.bin"
+size = 524288
+md5 = "3ea3202e2634cb47cb90f3a05c015010"
+[[system.file]]
+name = "mpr-17933.bin"
+size = 524288
+md5 = "3240872c70984b6cbfda1586cab68dbe"
+[[system.file]]
+name = "mpr-18100.bin"
+size = 524288
+md5 = "cb2cebc1b6e573b7c44523d037edcd45"
+[[system.file]]
+name = "mpr-18811-mx.ic1"
+size = 2097152
+md5 = "255113ba943c92a54facd25a10fd780c"
+[[system.file]]
+name = "mpr-19367-mx.ic1"
+size = 2097152
+md5 = "1cd19988d1d72a3e7caa0b73234c96b4"
+[[system.file]]
+name = "saturn_bios.bin"
+size = 524288
+md5 = "af5828fdff51384f99b3c4926be27762"
+[[system.file]]
+name = "sega1003.bin"
+size = 524288
+md5 = "74570fed4d44b2682b560c8cd44b8b6a"
+[[system.file]]
+name = "sega_100.bin"
+size = 524288
+md5 = "af5828fdff51384f99b3c4926be27762"
+[[system.file]]
+name = "sega_100a.bin"
+size = 524288
+md5 = "f273555d7d91e8a5a6bfd9bcf066331c"
+[[system.file]]
+name = "sega_101.bin"
+size = 524288
+md5 = "85ec9ca47d8f6807718151cbcca8b964"
+[[system.file]]
+name = "vsaturn.bin"
+size = 524288
+md5 = "ac4e4b6522e200c0d23d371a8cecbfd3"
+[[system.file]]
+name = "stvbios.zip"
+size = 2956357
+md5 = "0e92c1e02862dfeb4cdef7f4414b14a9"
+
+[[system]]
+folder = "segacd"
+also_for = ["megadrive"]
+need = "needed"
+note = "Mega Drive folder games that are CD discs use these too."
+hints = ["bios_cd*"]
+hint_sizes = [131072]
+[[system.file]]
+name = "bios_CD_E.bin"
+size = 131072
+md5 = "e66fa1dc5820d254611fdcdba0662372"
+[[system.file]]
+name = "bios_CD_J.bin"
+size = 131072
+md5 = "278a9397d192149e84e820ac621a8edd"
+[[system.file]]
+name = "bios_CD_U.bin"
+size = 131072
+md5 = "2efd74e3232ff260e371b99f84024f7f"
+
+[[system]]
+folder = "gba"
+need = "optional"
+note = ""
+hints = ["gba_bios*"]
+hint_sizes = [16384]
+[[system.file]]
+name = "gba_bios.bin"
+size = 16384
+md5 = "a860e8c0b6d573d191e4ec7db1b1e4f6"
+
+[[system]]
+folder = "nds"
+need = "optional"
+note = ""
+hints = ["bios7*", "bios9*", "nds7*", "nds9*", "firmware*"]
+hint_sizes = [16384, 4096, 131072, 262144, 524288]
+[[system.file]]
+name = "bios7.bin"
+size = 16384
+md5 = "df692a80a5b1bc90728bc3dfc76cd948"
+role = "arm7"
+[[system.file]]
+name = "bios9.bin"
+size = 4096
+md5 = "a392174eb3e572fed6447e956bde4b25"
+role = "arm9"
+[[system.file]]
+name = "firmware.bin"
+size = 262144
+md5 = "e45033d9b0fa6b0de071292bba7c9d13"
+role = "firmware"
+[[system.file]]
+name = "nds7.bin"
+size = 16384
+md5 = "df692a80a5b1bc90728bc3dfc76cd948"
+role = "arm7"
+[[system.file]]
+name = "nds9.bin"
+size = 4096
+md5 = "a392174eb3e572fed6447e956bde4b25"
+role = "arm9"
+
+[[system]]
+folder = "gamecube"
+need = "optional"
+note = "The start-up screen (IPL); games run without it."
+hints = ["ipl*", "gc-*"]
+hint_sizes = [131072, 2097152]
+[[system.file]]
+name = "gc-dvd-20010608.bin"
+size = 131072
+md5 = "561532ad496f644897952d2cef5bb431"
+[[system.file]]
+name = "gc-dvd-20010831.bin"
+size = 131072
+md5 = "b953eb1a8fc9922b3f7051c1cdc451f1"
+[[system.file]]
+name = "gc-dvd-20020402.bin"
+size = 131072
+md5 = "413154dd0e2c824c9b18b807fd03ec4e"
+[[system.file]]
+name = "gc-dvd-20020823.bin"
+size = 131072
+md5 = "c03f6bbaf644eb9b3ee261dbe199eb42"
+[[system.file]]
+name = "gc-ntsc-10.bin"
+size = 2097152
+md5 = "fc924a7c879b661abc37cec4f018fdf3"
+[[system.file]]
+name = "gc-ntsc-11.bin"
+size = 2097152
+md5 = "019e39822a9ca3029124f74dd4d55ac4"
+[[system.file]]
+name = "gc-ntsc-12.bin"
+size = 2097152
+md5 = "b17148254a5799684c7d783206504926"
+[[system.file]]
+name = "gc-pal-10.bin"
+size = 2097152
+md5 = "0cdda509e2da83c85bfe423dd87346cc"
+[[system.file]]
+name = "gc-pal-11.bin"
+size = 2097152
+md5 = "339848a0b7c2124cf155276c1e79cbd0"
+[[system.file]]
+name = "gc-pal-12.bin"
+size = 2097152
+md5 = "db92574caab77a7ec99d4605fd6f2450"
+[[system.file]]
+name = "IPL.bin"
+size = 2097152
+md5 = "db92574caab77a7ec99d4605fd6f2450"
+[[system.file]]
+name = "IPL.bin"
+size = 2097152
+md5 = "b17148254a5799684c7d783206504926"
+
+[[system]]
+folder = "pcengine"
+need = "needed"
+note = "Only for CD games; HuCard games need nothing."
+hints = ["syscard*"]
+hint_sizes = [262144]
+[[system.file]]
+name = "gecard.pce"
+size = 32768
+md5 = "6d2cb14fc3e1f65ceb135633d1694122"
+[[system.file]]
+name = "gexpress.pce"
+size = 32768
+md5 = "6d2cb14fc3e1f65ceb135633d1694122"
+[[system.file]]
+name = "syscard1.pce"
+size = 262144
+md5 = "2b7ccb3d86baa18f6402c176f3065082"
+[[system.file]]
+name = "syscard2.pce"
+size = 262144
+md5 = "3cdd6614a918616bfc41c862e889dd79"
+[[system.file]]
+name = "syscard2u.pce"
+size = 262144
+md5 = "94279f315e8b52904f65ab3108542afe"
+[[system.file]]
+name = "syscard3.pce"
+size = 262144
+md5 = "38179df8f4ac870017db21ebcbf53114"
+[[system.file]]
+name = "syscard3u.pce"
+size = 262144
+md5 = "0754f903b52e3b3342202bdafb13efa5"
+
+[[system]]
+folder = "neogeocd"
+need = "needed"
+note = ""
+hints = ["neocd*", "uni-bioscd*", "top-sp1*", "front-sp1*"]
+hint_sizes = [524288]
+[[system.file]]
+name = "000-lo.lo"
+size = 131072
+md5 = "fc7599f3f871578fe9a0453662d1c966"
+[[system.file]]
+name = "front-sp1.bin"
+size = 524288
+md5 = "5c2366f25ff92d71788468ca492ebeca"
+[[system.file]]
+name = "neocd.bin"
+size = 524288
+md5 = "f39572af7584cb5b3f70ae8cc848aba2"
+[[system.file]]
+name = "neocd_f.rom"
+size = 524288
+md5 = "8834880c33164ccbe6476b559f3e37de"
+[[system.file]]
+name = "neocd_sf.rom"
+size = 524288
+md5 = "043d76d5f0ef836500700c34faef774d"
+[[system.file]]
+name = "neocd_st.rom"
+size = 524288
+md5 = "f6325a33c6d63ea4b9162a3fa8c32727"
+[[system.file]]
+name = "neocd_sz.rom"
+size = 524288
+md5 = "971ee8a36fb72da57aed01758f0a37f5"
+[[system.file]]
+name = "neocd_t.rom"
+size = 524288
+md5 = "de3cf45d227ad44645b22aa83b49f450"
+[[system.file]]
+name = "neocd_z.rom"
+size = 524288
+md5 = "11526d58d4c524daef7d5d677dc6b004"
+[[system.file]]
+name = "top-sp1.bin"
+size = 524288
+md5 = "122aee210324c72e8a11116e6ef9c0d0"
+[[system.file]]
+name = "uni-bioscd.rom"
+size = 524288
+md5 = "08ca8b2dba6662e8024f9e789711c6fc"
+[[system.file]]
+name = "neocdz.zip"
+size = 953078
+md5 = "66bf2aeb1b870eac603925601e48af82"
+[[system.file]]
+name = "ng-lo.rom"
+size = 65536
+md5 = "e255264d85d5765013b1b2fa8109dd53"
+
+[[system]]
+folder = "gb"
+need = "optional"
+note = ""
+hints = ["dmg_*", "gb_bios*"]
+hint_sizes = [256]
+[[system.file]]
+name = "dmg_boot.bin"
+size = 256
+md5 = "32fbbd84168d3482956eb3c5051637f5"
+[[system.file]]
+name = "gb_bios.bin"
+size = 256
+md5 = "32fbbd84168d3482956eb3c5051637f5"
+[[system.file]]
+name = "dmg_rom.bin"
+size = 256
+md5 = "32fbbd84168d3482956eb3c5051637f5"
+
+[[system]]
+folder = "gbc"
+need = "optional"
+note = ""
+hints = ["cgb_*", "gbc_bios*"]
+hint_sizes = [2304]
+[[system.file]]
+name = "cgb_boot.bin"
+size = 2304
+md5 = "dbfce9db9deaa2567f6a84fde55f9680"
+[[system.file]]
+name = "gbc_bios.bin"
+size = 2304
+md5 = "dbfce9db9deaa2567f6a84fde55f9680"
+[[system.file]]
+name = "cgb_bios.bin"
+size = 2304
+md5 = "dbfce9db9deaa2567f6a84fde55f9680"
+
+[[system]]
+folder = "mastersystem"
+need = "optional"
+note = ""
+hints = ["bios*.sms"]
+hint_sizes = [8192]
+[[system.file]]
+name = "bios.sms"
+size = 8192
+md5 = "840481177270d5642a14ca71ee72844c"
+[[system.file]]
+name = "bios_E.sms"
+size = 8192
+md5 = "840481177270d5642a14ca71ee72844c"
+[[system.file]]
+name = "bios_J.sms"
+size = 8192
+md5 = "24a519c53f67b00640d0048ef7089105"
+[[system.file]]
+name = "bios_U.sms"
+size = 8192
+md5 = "840481177270d5642a14ca71ee72844c"
+
+[[system]]
+folder = "atari7800"
+need = "optional"
+note = ""
+hints = ["7800 bios*"]
+hint_sizes = [4096, 16384]
+[[system.file]]
+name = "7800 BIOS (E).rom"
+size = 16384
+md5 = "397bb566584be7b9764e7a68974c4263"
+[[system.file]]
+name = "7800 BIOS (U).rom"
+size = 4096
+md5 = "0763f1ffb006ddbe32e52d497ee848ae"
+
+# Emulators that keep their firmware inside their own app folder. If the folder can be seen on shared
+# storage it counts as installed; if it cannot be seen, the system is left out (that is not "missing").
+[[firmware]]
+folder = "ps3"
+emulator = "aPS3e"
+path = "/sdcard/Android/data/aenu.aps3e/files/aps3e/config/dev_flash"

@@ -1,0 +1,37 @@
+name: Something does not work
+description: Jewelcase did something wrong or unexpected
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Claude reads every report first and usually answers within a few minutes. A small, clear bug
+        is often fixed automatically; anything larger waits for the maintainer.
+        Please do not post links to games, BIOS files or firmware.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Jewelcase version
+      description: Shown by `./Jewelcase-x86_64.AppImage --version`.
+  - type: input
+    id: system
+    attributes:
+      label: Linux distribution and version
+      placeholder: Ubuntu 24.04
+  - type: input
+    id: handheld
+    attributes:
+      label: Handheld, Android version and frontend
+      placeholder: Anbernic RG477V, Android 14, ES-DE 3.5.0
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: If it happened during a sync, the lines around the problem from `~/.local/share/jewelcase/logs/sync.log`.
+      render: text

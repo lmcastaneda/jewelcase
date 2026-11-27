@@ -1,0 +1,12 @@
+.superpowers/
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+.pytest_cache/
+*.egg-info/
+.pytest-tmp/
+.worktrees/
+.flatpak-build/
+.fix/

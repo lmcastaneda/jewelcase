@@ -1,0 +1,145 @@
+# Emulators Jewelcase knows about.
+#
+# A `source` is listed only where the project's own GitHub releases were seen to carry an Android
+# APK (checked 2026-11-26 through api.github.com/repos/<repo>/releases/latest). Package names were
+# read from the RG477V itself or from the project's build files. Everything else has no source and
+# is "install from file" only:
+#   - RetroArch: GitHub releases carry no APK (builds are on buildbot.libretro.com, no release feed)
+#   - PPSSPP: GitHub releases carry no APK (ppsspp.org)
+#   - Dolphin: no GitHub releases (dolphin-emu.org)
+#   - DuckStation: GitHub releases carry no Android build
+#   - M64Plus FZ: GitHub releases carry no APK
+#   - AetherSX2, Citra, Dolphin MMJR: discontinued
+#   - Redream, DraStic, Yaba Sanshiro 2 Pro, GBC.emu, ES-DE: sold by their authors
+#
+# Add your own entries in ~/.config/jewelcase/emulators.toml using the same shape.
+#
+# asset: a regular expression for the APK's file name in the release.
+# pick = "sdk": several builds exist per Android level (…-sdk33.apk); take the highest the device runs.
+
+[[emulator]]
+package = "com.retroarch.aarch64"
+name = "RetroArch"
+systems = ["nes", "snes", "gb", "gbc", "gba", "megadrive", "mastersystem", "segacd", "saturn", "arcade", "mame", "cps1", "cps2", "atari2600", "atari7800", "neogeocd", "pcengine"]
+homepage = "https://www.retroarch.com/?page=platforms"
+
+[[emulator]]
+package = "org.ppsspp.ppsspp"
+name = "PPSSPP"
+systems = ["psp"]
+homepage = "https://www.ppsspp.org/download/"
+
+[[emulator]]
+package = "org.dolphinemu.dolphinemu"
+name = "Dolphin"
+systems = ["gamecube", "wii"]
+homepage = "https://dolphin-emu.org/download/"
+
+[[emulator]]
+package = "org.dolphinemu.mmjr"
+name = "Dolphin MMJR"
+systems = ["gamecube", "wii"]
+
+[[emulator]]
+package = "com.github.stenzek.duckstation"
+name = "DuckStation"
+systems = ["psx"]
+
+[[emulator]]
+package = "com.flycast.emulator"
+name = "Flycast"
+systems = ["dreamcast", "arcade"]
+homepage = "https://github.com/flyinghead/flycast"
+source = { kind = "github", repo = "flyinghead/flycast", asset = '^flycast-[\w.]+\.apk$' }
+
+[[emulator]]
+package = "io.recompiled.redream"
+name = "Redream"
+systems = ["dreamcast"]
+
+[[emulator]]
+package = "com.armsx2"
+name = "ARMSX2"
+systems = ["ps2"]
+homepage = "https://github.com/ARMSX2/ARMSX2"
+source = { kind = "github", repo = "ARMSX2/ARMSX2", asset = '^ARMSX2-[\w.]+-a\d+-[\w.]+-sdk(\d+)\.apk$', pick = "sdk" }
+
+[[emulator]]
+package = "xyz.aethersx2.android"
+name = "AetherSX2"
+systems = ["ps2"]
+
+# Releases carry one APK named after the version (2.43.apk), seen 2026-11-26. ES-DE launches it for
+# .iso files, or for .ps3 files that name a game installed inside aPS3e.
+[[emulator]]
+package = "aenu.aps3e"
+name = "aPS3e"
+systems = ["ps3"]
+esde = "aPS3e ISO (Standalone)"
+homepage = "https://github.com/aenu1/aps3e"
+source = { kind = "github", repo = "aenu1/aps3e", asset = '^\d+(\.\d+)*\.apk$' }
+
+[[emulator]]
+package = "org.mupen64plusae.v3.fzurita.pro"
+name = "M64Plus FZ Pro"
+systems = ["n64"]
+
+[[emulator]]
+package = "org.mupen64plusae.v3.fzurita"
+name = "M64Plus FZ"
+systems = ["n64"]
+
+[[emulator]]
+package = "org.vita3k.emulator"
+name = "Vita3K"
+systems = ["psvita"]
+homepage = "https://github.com/Vita3K/Vita3K-Android"
+source = { kind = "github", repo = "Vita3K/Vita3K-Android", asset = '^vita3k-android-release-[\w.]+\.apk$' }
+
+[[emulator]]
+package = "io.github.lime3ds.android"
+name = "Lime3DS / Azahar"
+systems = ["n3ds"]
+homepage = "https://github.com/azahar-emu/azahar"
+source = { kind = "github", repo = "azahar-emu/azahar", asset = '^azahar-android-googleplay-[\w.]+\.apk$' }
+
+[[emulator]]
+package = "org.azahar_emu.azahar"
+name = "Azahar"
+systems = ["n3ds"]
+homepage = "https://github.com/azahar-emu/azahar"
+source = { kind = "github", repo = "azahar-emu/azahar", asset = '^azahar-android-vanilla-[\w.]+\.apk$' }
+
+[[emulator]]
+package = "org.citra.emu"
+name = "Citra MMJ"
+systems = ["n3ds"]
+
+[[emulator]]
+package = "com.dsemu.drastic"
+name = "DraStic"
+systems = ["nds"]
+
+[[emulator]]
+package = "me.magnum.melonds"
+name = "melonDS"
+systems = ["nds"]
+homepage = "https://github.com/rafaelvcaetano/melonDS-android"
+source = { kind = "github", repo = "rafaelvcaetano/melonDS-android", asset = '^app-gitHub-prod-release\.apk$' }
+
+[[emulator]]
+package = "org.devmiyax.yabasanshioro2.pro"
+name = "Yaba Sanshiro 2 Pro"
+systems = ["saturn"]
+
+[[emulator]]
+package = "com.explusalpha.GbcEmu"
+name = "GBC.emu"
+systems = ["gb", "gbc"]
+
+[[emulator]]
+package = "org.es_de.frontend"
+name = "ES-DE"
+systems = []
+kind = "frontend"
+homepage = "https://es-de.org/"

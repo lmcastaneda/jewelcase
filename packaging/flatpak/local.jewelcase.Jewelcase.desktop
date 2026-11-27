@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Jewelcase
+GenericName=Handheld Manager
+Comment=Sync games and manage emulators on an Android handheld
+Exec=jewelcase
+Icon=local.jewelcase.Jewelcase
+Categories=Utility;Game;
+Keywords=Emulator;Games;Sync;Android;Handheld;ROM;
+Terminal=false
+StartupWMClass=local.jewelcase.Jewelcase

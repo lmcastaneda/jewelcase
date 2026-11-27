@@ -1,0 +1,474 @@
+# Where emulators keep saves, save states and settings on the device.
+#
+# Each [[source]] is one folder of one emulator and the patterns that pick the saves out of it.
+# Folders also hold BIOS images, keys, settings and caches: only files matching `include` are saves.
+# Paths were read from an RG477V (Android 14) on 2026-11-26. A folder that does not exist is simply
+# skipped. Add your own in ~/.config/jewelcase/saves.toml using the same shape; an entry with the same
+# id replaces the one here.
+#
+# kind:       "save", "state" or "settings"
+# include:    globs below root. "*" stays inside one folder, "**" spans folders. Case is ignored.
+# exclude:    globs that are never saves, even when include matches.
+# items:      "name"   files named after the game (suffix is removed to get the game's name)
+#             "folder" one directory per game; item_depth says how many path parts name it
+#             "file"   every file on its own (memory cards, files named by a game ID)
+# root_from:  read the folder from the emulator's own settings: { file, key }. Without key, the
+#             file's first line is the folder, and `below` is appended.
+# advice:     shown when folders here cannot be read.
+# restore:    false when the emulator cannot read files Jewelcase puts back.
+# noun:       what its items are called when not "Save", for example "Memory Card".
+
+# ---------------------------------------------------------------- RetroArch
+[[source]]
+id = "retroarch-saves"
+package = "com.retroarch.aarch64"
+label = "RetroArch"
+kind = "save"
+root = "/sdcard/RetroArch/saves"
+root_from = { file = "/sdcard/Android/data/com.retroarch.aarch64/files/retroarch.cfg", key = "savefile_directory" }
+include = ["**/*.srm", "**/*.sav", "**/*.eep", "**/*.sra", "**/*.fla", "**/*.mpk", "**/*.rtc", "**/*.nv",
+           "**/*.brm", "**/*.bkr", "**/*.dsv", "**/*.mcr", "**/*.mcd", "**/*.ram", "**/*.nvr", "**/*.bcr",
+           "**/hi/*.hi"]
+items = "name"
+suffix = '\.[^./]+$'
+
+[[source]]
+id = "retroarch-states"
+package = "com.retroarch.aarch64"
+label = "RetroArch"
+kind = "state"
+root = "/sdcard/RetroArch/states"
+root_from = { file = "/sdcard/Android/data/com.retroarch.aarch64/files/retroarch.cfg", key = "savestate_directory" }
+include = ["**/*.state*"]
+exclude = ["**/*.png"]
+items = "name"
+suffix = '\.state[^/]*$'
+
+# ---------------------------------------------------------------- DraStic
+[[source]]
+id = "drastic-saves"
+package = "com.dsemu.drastic"
+label = "DraStic"
+kind = "save"
+root = "/sdcard/DraStic/backup"
+include = ["*.dsv"]
+items = "name"
+suffix = '\.dsv$'
+
+[[source]]
+id = "drastic-states"
+package = "com.dsemu.drastic"
+label = "DraStic"
+kind = "state"
+root = "/sdcard/DraStic/savestates"
+include = ["*.dss"]
+items = "name"
+suffix = '_\d+\.dss$'
+
+# ---------------------------------------------------------------- PPSSPP
+# Inside its app folder, PPSSPP's per-game save folders cannot be read over adb.
+[[source]]
+id = "ppsspp-saves"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "save"
+root = "/sdcard/Android/data/org.ppsspp.ppsspp/files/PSP/SAVEDATA"
+include = ["*/**"]
+items = "folder"
+advice = "PSP saves cannot be read where PPSSPP keeps them. Move its memory stick to /sdcard/PSP in PPSSPP's settings."
+
+[[source]]
+id = "ppsspp-states"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "state"
+root = "/sdcard/Android/data/org.ppsspp.ppsspp/files/PSP/PPSSPP_STATE"
+include = ["*.ppst"]
+items = "file"
+
+[[source]]
+id = "ppsspp-shared-saves"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "save"
+root = "/sdcard/PSP/SAVEDATA"
+include = ["*/**"]
+items = "folder"
+
+[[source]]
+id = "ppsspp-shared-states"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "state"
+root = "/sdcard/PSP/PPSSPP_STATE"
+include = ["*.ppst"]
+items = "file"
+
+# ---------------------------------------------------------------- PlayStation 2
+[[source]]
+id = "armsx2-saves"
+noun = "Memory Card"
+package = "com.armsx2"
+label = "ARMSX2"
+kind = "save"
+root = "/sdcard/Android/data/com.armsx2/files/memcards"
+include = ["*.ps2"]
+items = "file"
+
+[[source]]
+id = "armsx2-states"
+package = "com.armsx2"
+label = "ARMSX2"
+kind = "state"
+root = "/sdcard/Android/data/com.armsx2/files/sstates"
+include = ["*.p2s"]
+items = "file"
+
+[[source]]
+id = "aethersx2-saves"
+noun = "Memory Card"
+package = "xyz.aethersx2.android"
+label = "AetherSX2"
+kind = "save"
+root = "/sdcard/Android/data/xyz.aethersx2.android/files/memcards"
+include = ["*.ps2"]
+items = "file"
+
+[[source]]
+id = "aethersx2-states"
+package = "xyz.aethersx2.android"
+label = "AetherSX2"
+kind = "state"
+root = "/sdcard/Android/data/xyz.aethersx2.android/files/sstates"
+include = ["*.p2s"]
+items = "file"
+
+# ---------------------------------------------------------------- PlayStation 3
+[[source]]
+id = "aps3e-saves"
+package = "aenu.aps3e"
+label = "aPS3e"
+kind = "save"
+root = "/sdcard/Android/data/aenu.aps3e/files/aps3e/config/dev_hdd0/home/00000001/savedata"
+include = ["*/**"]
+items = "folder"
+
+# ---------------------------------------------------------------- DuckStation
+[[source]]
+id = "duckstation-saves"
+noun = "Memory Card"
+package = "com.github.stenzek.duckstation"
+label = "DuckStation"
+kind = "save"
+root = "/sdcard/Android/data/com.github.stenzek.duckstation/files/memcards"
+include = ["*.mcd"]
+items = "name"
+suffix = '(_\d)?\.mcd$'
+
+[[source]]
+id = "duckstation-states"
+package = "com.github.stenzek.duckstation"
+label = "DuckStation"
+kind = "state"
+root = "/sdcard/Android/data/com.github.stenzek.duckstation/files/savestates"
+include = ["*.sav"]
+items = "file"
+
+# ---------------------------------------------------------------- Dolphin
+[[source]]
+id = "dolphin-gc-saves"
+package = "org.dolphinemu.dolphinemu"
+label = "Dolphin"
+kind = "save"
+root = "/sdcard/Android/data/org.dolphinemu.dolphinemu/files/GC"
+include = ["**/*.gci", "*.raw", "*.gcp"]
+items = "file"
+
+[[source]]
+id = "dolphin-wii-saves"
+package = "org.dolphinemu.dolphinemu"
+label = "Dolphin"
+kind = "save"
+root = "/sdcard/Android/data/org.dolphinemu.dolphinemu/files/Wii/title"
+include = ["*/*/data/**"]
+items = "folder"
+item_depth = 2
+
+[[source]]
+id = "dolphin-states"
+package = "org.dolphinemu.dolphinemu"
+label = "Dolphin"
+kind = "state"
+root = "/sdcard/Android/data/org.dolphinemu.dolphinemu/files/StateSaves"
+include = ["*.s??", "*.sav"]
+items = "file"
+
+[[source]]
+id = "dolphinmmjr-gc-saves"
+package = "org.dolphinemu.mmjr"
+label = "Dolphin MMJR"
+kind = "save"
+root = "/sdcard/mmjr-revamp/GC"
+include = ["**/*.gci", "*.raw", "*.gcp"]
+items = "file"
+
+[[source]]
+id = "dolphinmmjr-wii-saves"
+package = "org.dolphinemu.mmjr"
+label = "Dolphin MMJR"
+kind = "save"
+root = "/sdcard/mmjr-revamp/Wii/title"
+include = ["*/*/data/**"]
+items = "folder"
+item_depth = 2
+
+[[source]]
+id = "dolphinmmjr-states"
+package = "org.dolphinemu.mmjr"
+label = "Dolphin MMJR"
+kind = "state"
+root = "/sdcard/mmjr-revamp/StateSaves"
+include = ["*.s??", "*.sav"]
+items = "file"
+
+# ---------------------------------------------------------------- Dreamcast
+[[source]]
+id = "redream-saves"
+noun = "Memory Card"
+package = "io.recompiled.redream"
+label = "Redream"
+kind = "save"
+root = "/sdcard/Android/data/io.recompiled.redream/files"
+include = ["vmu?.bin"]
+items = "file"
+
+[[source]]
+id = "redream-shared-saves"
+noun = "Memory Card"
+package = "io.recompiled.redream"
+label = "Redream"
+kind = "save"
+root = "/sdcard/io.recompiled.redream/files"
+include = ["vmu?.bin"]
+items = "file"
+
+[[source]]
+id = "flycast-saves"
+noun = "Memory Card"
+package = "com.flycast.emulator"
+label = "Flycast"
+kind = "save"
+root = "/sdcard/Android/data/com.flycast.emulator/files/data"
+include = ["vmu_save_*.bin", "*.nvmem", "*.nvmem2", "*.eeprom"]
+items = "file"
+
+[[source]]
+id = "flycast-states"
+package = "com.flycast.emulator"
+label = "Flycast"
+kind = "state"
+root = "/sdcard/Android/data/com.flycast.emulator/files/data"
+include = ["*.state"]
+items = "file"
+
+# ---------------------------------------------------------------- Saturn
+[[source]]
+id = "yabasanshiro-saves"
+noun = "Memory Card"
+package = "org.devmiyax.yabasanshioro2.pro"
+label = "Yaba Sanshiro 2 Pro"
+kind = "save"
+root = "/sdcard/Android/data/org.devmiyax.yabasanshioro2.pro/files/yabause/memory"
+include = ["**"]
+items = "file"
+
+# ---------------------------------------------------------------- Nintendo 3DS
+[[source]]
+id = "citrammj-saves"
+package = "org.citra.emu"
+label = "Citra MMJ"
+kind = "save"
+root = "/sdcard/Android/data/org.citra.emu/files/citra-emu/sdmc/Nintendo 3DS"
+include = ["*/*/title/*/*/data/**"]
+items = "folder"
+item_depth = 5
+
+[[source]]
+id = "citrammj-states"
+package = "org.citra.emu"
+label = "Citra MMJ"
+kind = "state"
+root = "/sdcard/Android/data/org.citra.emu/files/citra-emu/states"
+include = ["*.cst"]
+items = "file"
+
+[[source]]
+id = "lime3ds-saves"
+package = "io.github.lime3ds.android"
+label = "Lime3DS / Azahar"
+kind = "save"
+root = "/sdcard/3DS/sdmc/Nintendo 3DS"
+include = ["*/*/title/*/*/data/**"]
+items = "folder"
+item_depth = 5
+
+[[source]]
+id = "lime3ds-states"
+package = "io.github.lime3ds.android"
+label = "Lime3DS / Azahar"
+kind = "state"
+root = "/sdcard/3DS/states"
+include = ["*.cst"]
+items = "file"
+
+# ---------------------------------------------------------------- PS Vita
+[[source]]
+id = "vita3k-saves"
+package = "org.vita3k.emulator"
+label = "Vita3K"
+kind = "save"
+root = "/sdcard/PSV/ux0/user"
+include = ["*/savedata/*/**"]
+items = "folder"
+item_depth = 3
+
+[[source]]
+id = "vita3k-app-saves"
+package = "org.vita3k.emulator"
+label = "Vita3K"
+kind = "save"
+root = "/sdcard/Android/data/org.vita3k.emulator/files/vita/ux0/user"
+include = ["*/savedata/*/**"]
+items = "folder"
+item_depth = 3
+
+# ---------------------------------------------------------------- emulator settings
+# kind = "settings": the files an emulator keeps its options in. Only the patterns below count, never
+# "everything in the folder": BIOS files, keys, firmware, databases, caches, shaders and overlays are
+# not settings and are never backed up. Every settings file is an item of its own. Emulators whose
+# settings location is not known have no entry here.
+[[source]]
+id = "retroarch-settings"
+package = "com.retroarch.aarch64"
+label = "RetroArch"
+kind = "settings"
+root = "/sdcard/Android/data/com.retroarch.aarch64/files"
+include = ["retroarch.cfg"]
+items = "file"
+
+[[source]]
+id = "retroarch-core-settings"
+package = "com.retroarch.aarch64"
+label = "RetroArch"
+kind = "settings"
+root = "/sdcard/RetroArch/config"
+include = ["**/*.opt", "**/*.cfg"]
+items = "file"
+
+[[source]]
+id = "armsx2-settings"
+package = "com.armsx2"
+label = "ARMSX2"
+kind = "settings"
+root = "/sdcard/Android/data/com.armsx2/files"
+include = ["PCSX2-Android.ini", "armsx2-settings.json", "inputprofiles/*.json", "gamesettings/*.ini"]
+items = "file"
+
+[[source]]
+id = "aethersx2-settings"
+package = "xyz.aethersx2.android"
+label = "AetherSX2"
+kind = "settings"
+root = "/sdcard/Android/data/xyz.aethersx2.android/files"
+include = ["gamesettings/*.ini", "PCSX2.ini", "PCSX2-Android.ini"]
+items = "file"
+
+[[source]]
+id = "ppsspp-settings"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "settings"
+root = "/sdcard/Android/data/org.ppsspp.ppsspp/files/PSP/SYSTEM"
+include = ["*.ini"]
+items = "file"
+
+[[source]]
+id = "ppsspp-shared-settings"
+package = "org.ppsspp.ppsspp"
+label = "PPSSPP"
+kind = "settings"
+root = "/sdcard/PSP/SYSTEM"
+include = ["*.ini"]
+items = "file"
+
+[[source]]
+id = "dolphin-settings"
+package = "org.dolphinemu.dolphinemu"
+label = "Dolphin"
+kind = "settings"
+root = "/sdcard/Android/data/org.dolphinemu.dolphinemu/files/Config"
+include = ["*.ini"]
+items = "file"
+
+[[source]]
+id = "dolphinmmjr-settings"
+package = "org.dolphinemu.mmjr"
+label = "Dolphin MMJR"
+kind = "settings"
+root = "/sdcard/Android/data/org.dolphinemu.mmjr/files/Config"
+include = ["*.ini"]
+items = "file"
+
+[[source]]
+id = "flycast-settings"
+package = "com.flycast.emulator"
+label = "Flycast"
+kind = "settings"
+root = "/sdcard/Android/data/com.flycast.emulator/files"
+include = ["emu.cfg", "mappings/*.cfg"]
+items = "file"
+
+[[source]]
+id = "redream-settings"
+package = "io.recompiled.redream"
+label = "Redream"
+kind = "settings"
+root = "/sdcard/Android/data/io.recompiled.redream/files"
+include = ["redream.cfg"]
+items = "file"
+
+[[source]]
+id = "yabasanshiro-settings"
+package = "org.devmiyax.yabasanshioro2.pro"
+label = "Yaba Sanshiro 2 Pro"
+kind = "settings"
+root = "/sdcard/Android/data/org.devmiyax.yabasanshioro2.pro/files/yabause"
+include = ["keymap_v2.json"]
+items = "file"
+
+[[source]]
+id = "citrammj-settings"
+package = "org.citra.emu"
+label = "Citra MMJ"
+kind = "settings"
+root = "/sdcard/Android/data/org.citra.emu/files/citra-emu/config"
+include = ["*.ini"]
+items = "file"
+
+[[source]]
+id = "vita3k-settings"
+package = "org.vita3k.emulator"
+label = "Vita3K"
+kind = "settings"
+root = "/sdcard/Android/data/org.vita3k.emulator/files"
+include = ["config.yml"]
+items = "file"
+
+[[source]]
+id = "aps3e-settings"
+package = "aenu.aps3e"
+label = "aPS3e"
+kind = "settings"
+root = "/sdcard/Android/data/aenu.aps3e/files/aps3e/config"
+include = ["*.yml"]
+items = "file"

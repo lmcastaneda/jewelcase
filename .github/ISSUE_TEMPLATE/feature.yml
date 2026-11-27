@@ -1,0 +1,25 @@
+name: An idea
+description: Something Jewelcase could do, or do better
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Claude reads every idea first. Small, clearly described improvements are often built
+        automatically; larger ones wait for the maintainer to decide.
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like Jewelcase to do?
+      description: Describe it the way you would use it. An example helps more than a general wish.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: What are you doing today instead?
+      description: The chore or the workaround this would replace.
+  - type: input
+    id: handheld
+    attributes:
+      label: Handheld and frontend, if it matters
+      placeholder: Anbernic RG477V, ES-DE 3.5.0
