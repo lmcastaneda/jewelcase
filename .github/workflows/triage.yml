@@ -115,6 +115,11 @@ jobs:
             --permission-mode default
             --allowedTools "Read,Grep,Glob,Bash(gh issue view:*),Bash(gh issue list:*),Bash(python3 .github/scripts/issue_action.py label:*),Bash(python3 .github/scripts/issue_action.py comment:*)"
             --disallowedTools "Read(//proc/**)"
+      - name: If Claude's step failed, say why
+        if: failure()
+        run: |
+          jq -r '[.[]? | select(.type == "result")] | last | .result // "no message"' \
+            "$RUNNER_TEMP/claude-execution-output.json" 2>/dev/null | head -c 2000 || true
 
   # If triage marked the issue ready, start the fix at once instead of waiting for the next scheduled run.
   handoff:
