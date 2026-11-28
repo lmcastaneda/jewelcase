@@ -133,6 +133,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # the fix began as a stranger's issue: this also keeps tokens away from the programs Claude starts
+          allowed_non_write_users: "*"
           # the fix workflow starts the review as the workflows' own bot, which the action otherwise
           # turns away; this job runs only when the gate was started that way, never from a pull request
           allowed_bots: "github-actions[bot]"
@@ -169,7 +171,7 @@ jobs:
             --permission-mode default
             --add-dir pr-head
             --allowedTools "Read,Grep,Glob,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh issue view:*)"
-            --disallowedTools "Read(//proc/**)"
+            --disallowedTools "Read(//proc/**),Bash(gh * --jq*),Bash(gh * -q*),Bash(gh * --template*),Bash(gh * -t*)"
             --json-schema '{"type":"object","properties":{"verdict":{"type":"string","enum":["approve","reject"]},"reasons":{"type":"array","items":{"type":"string"}},"summary":{"type":"string"}},"required":["verdict","reasons","summary"]}'
       - name: If Claude's step failed, say why
         if: failure()
