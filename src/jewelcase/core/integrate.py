@@ -5,6 +5,7 @@ import contextlib
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -104,7 +105,24 @@ def refresh_icon_cache(home: Path | None = None) -> None:
         return
     with contextlib.suppress(OSError, subprocess.SubprocessError):     # a non-zero exit is ignored too
         subprocess.run([tool, "-f", "-t", str(hicolor)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL, timeout=10)
+                       stderr=subprocess.DEVNULL, timeout=10, env=_host_env())
+
+
+def _host_env() -> dict[str, str] | None:
+    """The environment to start a host program with; None (unchanged) when running from source.
+
+    The packaged app puts its own library folder on LD_LIBRARY_PATH, and a host program loading those
+    libraries can fail to start. PyInstaller keeps the user's value in LD_LIBRARY_PATH_ORIG.
+    """
+    if not getattr(sys, "frozen", False):
+        return None
+    env = dict(os.environ)
+    orig = env.get("LD_LIBRARY_PATH_ORIG")
+    if orig is not None:
+        env["LD_LIBRARY_PATH"] = orig
+    else:
+        env.pop("LD_LIBRARY_PATH", None)
+    return env
 
 
 def remove_menu_entry(home: Path | None = None) -> None:

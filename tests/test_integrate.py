@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from jewelcase.core import integrate, net
@@ -17,6 +18,27 @@ def test_menu_entry_points_at_the_appimage(tmp_path):
     assert integrate.menu_entry_installed(home) is True
     integrate.remove_menu_entry(home)
     assert integrate.menu_entry_installed(home) is False
+
+
+def test_the_icon_cache_refreshed_is_the_one_in_the_home_folder_given_not_the_users(monkeypatch, tmp_path):
+    user, given = tmp_path / "user", tmp_path / "given"
+    for home in (user, given):
+        hicolor = home / ".local/share/icons/hicolor"
+        hicolor.mkdir(parents=True)
+        (hicolor / "icon-theme.cache").write_bytes(b"cache")
+        os.utime(hicolor, (1_000_000_000, 1_000_000_000))
+    calls = tmp_path / "calls.txt"
+    tool = tmp_path / "bin" / "gtk-update-icon-cache"
+    tool.parent.mkdir()
+    tool.write_text(f'#!/bin/sh\necho "$@" >> "{calls}"\n')
+    tool.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tool.parent))
+    monkeypatch.setenv("HOME", str(user))
+    app = tmp_path / "Jewelcase.AppImage"
+    app.write_bytes(b"x")
+    integrate.install_menu_entry(app, given)
+    assert calls.read_text() == f"-f -t {given / '.local/share/icons/hicolor'}\n"
+    assert (user / ".local/share/icons/hicolor").stat().st_mtime == 1_000_000_000
 
 
 def test_running_as_appimage(monkeypatch, tmp_path):

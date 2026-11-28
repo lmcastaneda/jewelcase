@@ -1,6 +1,7 @@
 """`jewelcase install-menu-entry`: the entry, its icon and the icon cache, always in a temporary home."""
 import json
 import os
+import sys
 
 import pytest
 
@@ -31,12 +32,13 @@ def appimage(tmp_path, monkeypatch, folder="Apps"):
 
 
 def cache_tool(tmp_path, monkeypatch, code=0):
-    """A stand-in gtk-update-icon-cache on PATH that writes down each call."""
+    """A stand-in gtk-update-icon-cache on PATH that writes down each call, and its library path in libs.txt."""
     folder = tmp_path / "bin"
     folder.mkdir()
     calls = tmp_path / "calls.txt"
     tool = folder / "gtk-update-icon-cache"
-    tool.write_text(f'#!/bin/sh\necho "$@" >> "{calls}"\nexit {code}\n')
+    tool.write_text(f'#!/bin/sh\necho "$@" >> "{calls}"\n'
+                    f'echo "${{LD_LIBRARY_PATH-unset}}" >> "{tmp_path / "libs.txt"}"\nexit {code}\n')
     tool.chmod(0o755)
     monkeypatch.setenv("PATH", str(folder))
     return calls
@@ -112,6 +114,30 @@ def test_with_an_icon_cache_and_no_tool_the_hicolor_folder_ends_up_newer_than_th
     assert hicolor(home).stat().st_mtime > cache.stat().st_mtime
 
 
+def test_started_from_the_packaged_app_the_cache_tool_gets_the_hosts_library_path_back(home, tmp_path, monkeypatch,
+                                                                                      capsys):
+    appimage(tmp_path, monkeypatch)
+    icon_cache(home)
+    cache_tool(tmp_path, monkeypatch)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setenv("LD_LIBRARY_PATH", str(tmp_path / "bundle/_internal"))     # as the packaged app has it
+    monkeypatch.delenv("LD_LIBRARY_PATH_ORIG", raising=False)
+    assert run(capsys)[0] == 0
+    monkeypatch.setenv("LD_LIBRARY_PATH_ORIG", "/host/lib")                     # the user had one of their own
+    assert run(capsys)[0] == 0
+    assert (tmp_path / "libs.txt").read_text() == "unset\n/host/lib\n"
+
+
+def test_run_from_source_the_cache_tool_gets_the_library_path_as_it_is(home, tmp_path, monkeypatch, capsys):
+    appimage(tmp_path, monkeypatch)
+    icon_cache(home)
+    cache_tool(tmp_path, monkeypatch)
+    monkeypatch.delattr(sys, "frozen", raising=False)
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/user/lib")
+    assert run(capsys)[0] == 0
+    assert (tmp_path / "libs.txt").read_text() == "/user/lib\n"
+
+
 def test_with_no_icon_cache_the_tool_is_not_run_even_though_it_is_on_path(home, tmp_path, monkeypatch, capsys):
     appimage(tmp_path, monkeypatch)
     calls = cache_tool(tmp_path, monkeypatch)
@@ -153,6 +179,19 @@ def test_run_a_second_time_after_the_appimage_moved_the_entry_holds_the_new_path
     assert run(capsys)[0] == 0
     text = desktop(home).read_text()
     assert f'Exec="{moved}"\n' in text and "Old" not in text
+
+
+def test_a_second_install_puts_new_files_in_place_and_leaves_the_old_ones_as_they_were(home, tmp_path,
+                                                                                       monkeypatch, capsys):
+    old_app = appimage(tmp_path, monkeypatch, folder="Old")
+    run(capsys)
+    old_entry, old_icon = tmp_path / "old.desktop", tmp_path / "old.svg"
+    os.link(desktop(home), old_entry)                  # a second name for each file the first install wrote
+    os.link(icon(home), old_icon)
+    appimage(tmp_path, monkeypatch, folder="New")
+    assert run(capsys)[0] == 0
+    assert f'Exec="{old_app}"\n' in old_entry.read_text()   # renamed into place, never rewritten where it lay
+    assert not os.path.samefile(desktop(home), old_entry) and not os.path.samefile(icon(home), old_icon)
 
 
 def test_json_gives_what_was_written_or_why_not(home, tmp_path, monkeypatch, capsys):
