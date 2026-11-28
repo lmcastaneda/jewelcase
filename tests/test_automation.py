@@ -426,6 +426,25 @@ def test_the_reviewer_can_only_look():
                for t in allowed_tools(step)), allowed_tools(step)
 
 
+def test_claude_runs_for_the_workflows_own_bot_where_one_workflow_starts_another_and_for_no_other_bot():
+    """Triage starts the fix and the fix starts the review, both as the workflows' own bot, and the action
+    refuses a bot it was not told about. Only a job that nobody outside can start may name that bot."""
+    ours = "github-actions[bot]"
+    named = {(file, name): step["with"].get("allowed_bots", "")
+             for file, name, job, _ in all_jobs() for step in claude_steps(job)}
+    assert {key for key, bots in named.items() if bots} == {("fix.yml", "write"), ("gate.yml", "review")}
+    assert named["fix.yml", "write"] == named["gate.yml", "review"] == ours
+    # the fix starts only by hand, from triage or on the clock
+    assert set(workflow("fix.yml")["on"]) == {"workflow_dispatch", "schedule"}
+    # the review starts only when the gate itself was started that way, never straight from a pull request
+    gate = workflow("gate.yml")["jobs"]
+    rules = next(s["run"] for s in steps(gate["rules"]) if s.get("id") == "rules")
+    assert gate["review"]["if"] == "needs.rules.outputs.next == 'review'"
+    assert rules.count("next=review") == 1
+    assert re.search(r'elif \[ "\$EVENT" = "workflow_dispatch" \]; then\n(?:(?!\n\s*(?:elif|else|fi)\b).)*next=review',
+                     rules, re.S)
+
+
 def test_the_gate_runs_from_main_and_only_puts_the_pull_requests_files_in_a_side_folder():
     doc = workflow("gate.yml")
     assert set(doc["on"]) == {"pull_request_target", "workflow_dispatch"}
