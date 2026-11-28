@@ -8,9 +8,10 @@ newest freedesktop runtime installed on the development machine; the AppImage ra
 
 ## App id
 
-`local.jewelcase.Jewelcase` is a placeholder. To change it, rename the three files in this folder that carry
-it in their name and replace the text in them, in `packaging/build-flatpak.sh` and in
-`tests/test_flatpak.py`. Nothing in `src/` contains it: the app reads it from `FLATPAK_ID` at run time.
+The app id is `dev.luismcastaneda.Jewelcase`, and the developer id in the metainfo is `dev.luismcastaneda`.
+The id is the name of the three files in this folder (the manifest, the desktop file and the metainfo)
+and appears inside each of them; `packaging/build-flatpak.sh` and `tests/test_flatpak.py` carry it too.
+Nothing in `src/` contains it: the app reads it from `FLATPAK_ID` at run time.
 
 ## Permissions (`finish-args`)
 
@@ -26,7 +27,7 @@ it in their name and replace the text in them, in `packaging/build-flatpak.sh` a
 
 ## What differs from the AppImage
 
-- Settings, the database and downloads live under `~/.var/app/local.jewelcase.Jewelcase/{config,data,cache}`,
+- Settings, the database and downloads live under `~/.var/app/dev.luismcastaneda.Jewelcase/{config,data,cache}`,
   not `~/.config/jewelcase` and friends. The library is chosen again on first run (the home folder is
   readable, so the old library folder is simply picked); old settings can be copied across.
 - adb: the host's `adb` is not visible inside the sandbox, so the Device page offers to download Google's

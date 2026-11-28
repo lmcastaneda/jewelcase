@@ -5,7 +5,7 @@
 # Needs flatpak, flatpak-builder and the org.freedesktop.Platform and Sdk 26.08 runtimes.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-APP_ID=local.jewelcase.Jewelcase
+APP_ID=dev.luismcastaneda.Jewelcase
 RUNTIME_VERSION=26.08
 MANIFEST="$ROOT/packaging/flatpak/$APP_ID.json"
 APPIMAGE="$ROOT/dist/Jewelcase-x86_64.AppImage"

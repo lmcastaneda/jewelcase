@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FLATPAK = ROOT / "packaging/flatpak"
-APP_ID = "local.jewelcase.Jewelcase"
+APP_ID = "dev.luismcastaneda.Jewelcase"
 
 
 def manifest() -> dict:
@@ -73,3 +73,16 @@ def test_the_window_class_in_the_desktop_file_is_the_id_the_app_sets_inside_the_
     desktop.optionxform = str
     desktop.read(FLATPAK / f"{APP_ID}.desktop")
     assert desktop["Desktop Entry"]["StartupWMClass"] == integrate.desktop_name()
+
+
+def test_the_old_placeholder_id_is_gone_from_the_code_the_packaging_the_tests_and_the_readme():
+    placeholder = ".".join(["local", "jewelcase", "Jewelcase"])   # built from parts so this file does not match
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z", "--", "packaging", "src", "tests", "README.md"],
+        cwd=ROOT, capture_output=True, check=True,
+    ).stdout.decode().split("\0")
+    paths = [ROOT / p for p in tracked if p and (ROOT / p).is_file()]
+    assert len(paths) > 10
+    carrying = [str(p.relative_to(ROOT)) for p in paths
+                if placeholder in p.name or placeholder.encode() in p.read_bytes()]
+    assert carrying == []
