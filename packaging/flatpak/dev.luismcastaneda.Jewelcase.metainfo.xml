@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>local.jewelcase.Jewelcase</id>
+  <id>dev.luismcastaneda.Jewelcase</id>
   <name>Jewelcase</name>
   <summary>Sync games and manage emulators on an Android handheld</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <developer id="local.jewelcase">
+  <developer id="dev.luismcastaneda">
     <name>Jewelcase</name>
   </developer>
   <description>
     <p>Jewelcase keeps a game library on your computer and copies the games you tick to an Android gaming handheld over adb. It also installs and updates emulators, backs up saves, converts archives and shows posters.</p>
     <p>Switch on USB debugging on the handheld and tap Allow when it asks.</p>
   </description>
-  <launchable type="desktop-id">local.jewelcase.Jewelcase.desktop</launchable>
+  <launchable type="desktop-id">dev.luismcastaneda.Jewelcase.desktop</launchable>
   <provides>
     <binary>jewelcase</binary>
   </provides>

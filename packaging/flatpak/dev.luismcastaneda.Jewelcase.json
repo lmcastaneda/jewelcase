@@ -1,5 +1,5 @@
 {
-  "app-id": "local.jewelcase.Jewelcase",
+  "app-id": "dev.luismcastaneda.Jewelcase",
   "runtime": "org.freedesktop.Platform",
   "runtime-version": "26.08",
   "sdk": "org.freedesktop.Sdk",
@@ -30,9 +30,9 @@
         "mkdir -p /app/lib /app/bin",
         "cp -a squashfs-root/usr/bin/jewelcase /app/lib/jewelcase",
         "install -Dm755 jewelcase-launcher /app/bin/jewelcase",
-        "install -Dm644 local.jewelcase.Jewelcase.svg /app/share/icons/hicolor/scalable/apps/local.jewelcase.Jewelcase.svg",
-        "install -Dm644 local.jewelcase.Jewelcase.desktop /app/share/applications/local.jewelcase.Jewelcase.desktop",
-        "install -Dm644 local.jewelcase.Jewelcase.metainfo.xml /app/share/metainfo/local.jewelcase.Jewelcase.metainfo.xml"
+        "install -Dm644 dev.luismcastaneda.Jewelcase.svg /app/share/icons/hicolor/scalable/apps/dev.luismcastaneda.Jewelcase.svg",
+        "install -Dm644 dev.luismcastaneda.Jewelcase.desktop /app/share/applications/dev.luismcastaneda.Jewelcase.desktop",
+        "install -Dm644 dev.luismcastaneda.Jewelcase.metainfo.xml /app/share/metainfo/dev.luismcastaneda.Jewelcase.metainfo.xml"
       ],
       "sources": [
         {
@@ -49,15 +49,15 @@
         {
           "type": "file",
           "path": "../../src/jewelcase/data/jewelcase.svg",
-          "dest-filename": "local.jewelcase.Jewelcase.svg"
+          "dest-filename": "dev.luismcastaneda.Jewelcase.svg"
         },
         {
           "type": "file",
-          "path": "local.jewelcase.Jewelcase.desktop"
+          "path": "dev.luismcastaneda.Jewelcase.desktop"
         },
         {
           "type": "file",
-          "path": "local.jewelcase.Jewelcase.metainfo.xml"
+          "path": "dev.luismcastaneda.Jewelcase.metainfo.xml"
         }
       ]
     }

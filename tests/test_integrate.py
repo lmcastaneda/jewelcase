@@ -69,7 +69,7 @@ def test_inside_a_flatpak_there_is_no_applications_menu_entry_to_add(monkeypatch
     app = tmp_path / "C.AppImage"
     app.write_bytes(b"x")
     monkeypatch.setenv("APPIMAGE", str(app))
-    monkeypatch.setenv("FLATPAK_ID", "local.jewelcase.Jewelcase")
+    monkeypatch.setenv("FLATPAK_ID", "dev.luismcastaneda.Jewelcase")
     assert integrate.in_flatpak() is True
     assert integrate.appimage_path() is None
 
@@ -83,21 +83,21 @@ def test_outside_a_flatpak_the_environment_says_so(monkeypatch):
 
 def test_the_flatpak_info_file_also_marks_a_sandbox(monkeypatch, tmp_path):
     info = tmp_path / ".flatpak-info"
-    info.write_text("[Application]\nname=local.jewelcase.Jewelcase\n")
+    info.write_text("[Application]\nname=dev.luismcastaneda.Jewelcase\n")
     monkeypatch.delenv("FLATPAK_ID", raising=False)
     monkeypatch.setattr(integrate, "FLATPAK_INFO", info)
     assert integrate.in_flatpak() is True
 
 
 def test_in_a_flatpak_the_desktop_file_is_named_after_the_app_id(monkeypatch):
-    monkeypatch.setenv("FLATPAK_ID", "local.jewelcase.Jewelcase")
-    assert integrate.desktop_name() == "local.jewelcase.Jewelcase"
+    monkeypatch.setenv("FLATPAK_ID", "dev.luismcastaneda.Jewelcase")
+    assert integrate.desktop_name() == "dev.luismcastaneda.Jewelcase"
 
 
 def test_a_second_flatpak_launch_finds_the_first_through_the_shared_runtime_folder(monkeypatch, tmp_path):
-    monkeypatch.setenv("FLATPAK_ID", "local.jewelcase.Jewelcase")
+    monkeypatch.setenv("FLATPAK_ID", "dev.luismcastaneda.Jewelcase")
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     name = integrate.instance_name("jewelcase-1000")
-    assert name == str(tmp_path / "app/local.jewelcase.Jewelcase/jewelcase-1000")
+    assert name == str(tmp_path / "app/dev.luismcastaneda.Jewelcase/jewelcase-1000")
     monkeypatch.delenv("FLATPAK_ID")
     assert integrate.instance_name("jewelcase-1000") == "jewelcase-1000"

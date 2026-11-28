@@ -56,8 +56,8 @@ The AppImage is built on Ubuntu 22.04 and checked on Ubuntu 22.04 and 24.04, Deb
 Fedora, Arch, and openSUSE Leap 15.6 and Tumbleweed (`packaging/check-distros.sh`).
 
 **Flatpak (prepared, not yet built).** `packaging/build-flatpak.sh` needs `flatpak-builder`, the freedesktop
-26.08 SDK and the AppImage built first; it writes `dist/Jewelcase.flatpak`. The app id `local.jewelcase.Jewelcase`
-is a placeholder. Inside a Flatpak, settings and data live under `~/.var/app/<id>/`, adb is downloaded into
+26.08 SDK and the AppImage built first; it writes `dist/Jewelcase.flatpak`. The app id is
+`dev.luismcastaneda.Jewelcase`. Inside a Flatpak, settings and data live under `~/.var/app/<id>/`, adb is downloaded into
 the app's data folder, and `7z` and `chdman` are not available. Details: `packaging/flatpak/README.md`.
 
 ## First run
