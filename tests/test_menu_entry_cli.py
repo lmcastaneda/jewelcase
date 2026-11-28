@@ -205,6 +205,73 @@ def test_json_gives_what_was_written_or_why_not(home, tmp_path, monkeypatch, cap
     assert code == 0 and json.loads(out) == {"written": True, **paths}
 
 
+@pytest.fixture
+def unwritable():
+    """Make folders read-only for one test and give them back their mode afterwards, so pytest can clean up."""
+    made = []
+
+    def lock(folder):
+        folder.mkdir(parents=True, exist_ok=True)
+        made.append(folder)
+        folder.chmod(0o555)
+        return folder
+
+    yield lock
+    for folder in made:
+        folder.chmod(0o755)
+
+
+def not_added(folder, reason="Permission denied"):
+    return f"Jewelcase could not be added to the applications menu: {folder} could not be written ({reason})."
+
+
+def test_when_the_applications_folder_cannot_be_written_the_command_says_so_in_one_sentence_and_exits_2(
+        home, tmp_path, monkeypatch, capsys, unwritable):
+    appimage(tmp_path, monkeypatch)
+    folder = unwritable(desktop(home).parent)
+    code = cli.main(["install-menu-entry"])
+    out, err = capsys.readouterr()
+    assert code == 2
+    assert out == not_added(folder) + "\n" and err == ""
+    assert icon(home).exists() and not desktop(home).exists()     # the icon written first stays
+
+
+def test_with_json_a_menu_entry_that_cannot_be_written_gives_written_false_and_the_sentence(home, tmp_path,
+                                                                                            monkeypatch, capsys,
+                                                                                            unwritable):
+    appimage(tmp_path, monkeypatch)
+    folder = unwritable(desktop(home).parent)
+    code, out = run(capsys, "--json")
+    assert code == 2 and json.loads(out) == {"written": False, "error": not_added(folder)}
+
+
+def test_when_the_icon_folder_cannot_be_written_the_sentence_names_that_folder(home, tmp_path, monkeypatch, capsys,
+                                                                               unwritable):
+    appimage(tmp_path, monkeypatch)
+    folder = unwritable(icon(home).parent)
+    code, out = run(capsys)
+    assert code == 2 and out == not_added(folder) + "\n"
+    assert not desktop(home).exists()
+
+
+def test_a_file_where_the_applications_folder_should_be_is_named_in_the_sentence(home, tmp_path, monkeypatch, capsys):
+    appimage(tmp_path, monkeypatch)
+    desktop(home).parent.parent.mkdir(parents=True)
+    desktop(home).parent.write_text("not a folder")
+    code, out = run(capsys)
+    assert code == 2 and out == not_added(desktop(home).parent, "File exists") + "\n"
+
+
+def test_no_temporary_file_is_left_beside_the_entry_or_the_icon_after_a_failed_install(home, tmp_path, monkeypatch,
+                                                                                       capsys):
+    appimage(tmp_path, monkeypatch)
+    (desktop(home) / "in the way").mkdir(parents=True)     # a folder where the entry goes: the rename fails
+    code, out = run(capsys)
+    assert code == 2 and out.startswith("Jewelcase could not be added to the applications menu: ")
+    assert [p.name for p in desktop(home).parent.iterdir()] == ["jewelcase.desktop"]
+    assert [p.name for p in icon(home).parent.iterdir()] == ["jewelcase.svg"]
+
+
 def test_no_temporary_file_is_left_beside_the_entry_or_the_icon(home, tmp_path, monkeypatch, capsys):
     appimage(tmp_path, monkeypatch)
     run(capsys)

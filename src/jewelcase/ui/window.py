@@ -526,8 +526,12 @@ class MainWindow(QMainWindow):
         from ..core import integrate
         exe = integrate.appimage_path()
         if exe:
-            integrate.install_menu_entry(exe)
-            self.toast.show_message("Jewelcase was added to the applications menu")
+            try:
+                integrate.install_menu_entry(exe)
+            except OSError as err:
+                self.toast.show_message(f"Could not add Jewelcase to the applications menu ({err.strerror or err})")
+            else:
+                self.toast.show_message("Jewelcase was added to the applications menu")
 
     def _sidebar_changed(self, item, _previous=None) -> None:
         if item is not None and item.data(0, ID_ROLE):
