@@ -100,6 +100,10 @@ def cmd_status(s: Session, args) -> int:
 
 def cmd_games(s: Session, args) -> int:
     rows = s.rows()
+    if args.system:
+        known = sorted({r.system for r in rows} | set(s.library.systems()))
+        if args.system not in known:
+            raise SystemExit(f"No such system: {args.system}. Systems: {', '.join(known)}")
     if args.list:
         rows = _smart(s, rows, args.list)
     if args.system:
