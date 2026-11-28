@@ -50,6 +50,12 @@ platform-tools into Jewelcase's own data folder. `7z`, `chdman` (from MAME's too
 library copy; without `chdman` or `dolphin-tool`, a disc image is unpacked as it is instead of being made
 into a CHD or an RVZ.
 
+`./Jewelcase-x86_64.AppImage install-menu-entry`, or **Add to Applications Menu** in the window's menu,
+adds Jewelcase to the applications menu. It writes `~/.local/share/applications/jewelcase.desktop` and
+`~/.local/share/icons/hicolor/scalable/apps/jewelcase.svg`, and refreshes the icon cache with
+`gtk-update-icon-cache` when that is installed. Run it again after moving the AppImage, or when the icon
+shows broken, and it repairs both.
+
 On the handheld, switch on **USB debugging** (Developer options) and tap **Allow** when it asks.
 
 The AppImage is built on Ubuntu 22.04 and checked on Ubuntu 22.04 and 24.04, Debian 12 and 13,
@@ -337,6 +343,7 @@ jewelcase saves devices                                    # the handhelds whose
 jewelcase saves restore --all --from RG477V-ABC123 --yes   # from another handheld's set
 jewelcase --demo gui                                       # try the window on made-up games, no device needed
 jewelcase --version                                        # which version this is, for a bug report
+jewelcase install-menu-entry                               # add the AppImage to the applications menu, or repair its entry and icon
 ```
 
 With the AppImage, the same commands work as `./Jewelcase-x86_64.AppImage status`, and so on.
@@ -357,6 +364,8 @@ With the AppImage, the same commands work as `./Jewelcase-x86_64.AppImage status
 | Covers and system images copied from ES-DE | `~/.cache/jewelcase/art/` |
 | Downloaded covers | `~/.cache/jewelcase/art/downloaded/` |
 | Disc images while a CHD is made | `~/.cache/jewelcase/convert/` |
+| Applications menu entry | `~/.local/share/applications/jewelcase.desktop` |
+| Its icon | `~/.local/share/icons/hicolor/scalable/apps/jewelcase.svg` |
 
 Extra systems can be added to the settings file:
 
