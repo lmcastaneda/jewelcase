@@ -4,6 +4,8 @@
 An issue is picked only if triage labelled it `claude:ready` and nothing has set it aside since. With
 WANTED set (the triage workflow passes the issue it just read) only that issue is considered.
 Writes `number=<n>` to GITHUB_OUTPUT, or `number=` when there is nothing to do.
+
+Before picking, and when called as `pick_issue.py tidy`, it closes the issues whose fix has merged.
 """
 from __future__ import annotations
 
@@ -53,11 +55,55 @@ def may_start(open_fixes: int, fixes_today: int) -> bool:
     return open_fixes < MAX_OPEN and fixes_today < MAX_PER_DAY
 
 
+def fixed(issues: list[dict], merged: list[dict]) -> list[tuple[int, int]]:
+    """(issue, pull request) for every issue Claude was working on whose fix has merged.
+
+    Only Claude's own fix counts: opened by the workflows' bot from the branch claude/issue-N in this
+    repository and merged into main. Anyone can name a branch in a fork.
+    """
+    by_branch = {}
+    for p in merged:
+        author = p.get("author") or {}
+        if (p.get("isCrossRepository") is False and p.get("baseRefName") == "main"
+                and author.get("is_bot") is True and author.get("login") == "app/github-actions"
+                and isinstance(p.get("headRefName"), str) and isinstance(p.get("number"), int)):
+            by_branch[p["headRefName"]] = p["number"]
+    done = []
+    for i in issues:
+        number = i.get("number")
+        if isinstance(number, int) and TAKEN in _labels(i) and f"claude/issue-{number}" in by_branch:
+            done.append((number, by_branch[f"claude/issue-{number}"]))
+    return sorted(done)
+
+
 def _gh(*args: str) -> str:
     return subprocess.run(["gh", *args], check=True, capture_output=True, text=True).stdout
 
 
+def tidy() -> list[tuple[int, int]]:
+    """Close the issues whose fix has merged. GitHub does not do it for a pull request a workflow opened."""
+    issues = json.loads(_gh("issue", "list", "--state", "open", "--label", TAKEN, "--limit", "100",
+                            "--json", "number,labels"))
+    if not issues:
+        return []
+    prs = json.loads(_gh("pr", "list", "--state", "merged", "--limit", "100",
+                         "--json", "number,headRefName,isCrossRepository,baseRefName,author"))
+    done = fixed(issues, prs)
+    for issue, pull in done:
+        _gh("issue", "close", str(issue), "--comment", f"Fixed by pull request #{pull}, which has been merged.")
+        _gh("issue", "edit", str(issue), "--remove-label", TAKEN)
+        print(f"Closed issue #{issue}: fixed by pull request #{pull}.")
+    return done
+
+
 def main() -> int:
+    if sys.argv[1:] == ["tidy"]:
+        tidy()
+        return 0
+    try:
+        tidy()
+    except subprocess.CalledProcessError as error:      # tidying up must not stop the next fix
+        print(f"Could not close fixed issues: {error.stderr.strip() or error}")
     wanted = os.environ.get("WANTED", "").strip()
     wanted_number = int(wanted) if wanted.isdigit() else None
     fields = "headRefName,isCrossRepository"
