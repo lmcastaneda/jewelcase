@@ -79,6 +79,16 @@ esde = "aPS3e ISO (Standalone)"
 homepage = "https://github.com/aenu1/aps3e"
 source = { kind = "github", repo = "aenu1/aps3e", asset = '^\d+(\.\d+)*\.apk$' }
 
+# Releases carry one APK per Android level (ARMSX3-1.7.3-a13-armv8.2-sdk33.apk) and a "legacy" build for
+# older processors that is left out, as with ARMSX2. The same project also publishes iPhone builds as
+# releases of their own (ARMSX3-0.0.4.ipa), which carry no APK. Seen 2026-11-27.
+[[emulator]]
+package = "com.armsx3"
+name = "ARMSX3"
+systems = ["ps3"]
+homepage = "https://github.com/ARMSX2/ARMSX3"
+source = { kind = "github", repo = "ARMSX2/ARMSX3", asset = '^ARMSX3-[\w.]+-a\d+-[\w.]+-sdk(\d+)\.apk$', pick = "sdk" }
+
 [[emulator]]
 package = "org.mupen64plusae.v3.fzurita.pro"
 name = "M64Plus FZ Pro"
