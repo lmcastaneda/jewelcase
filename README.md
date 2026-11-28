@@ -61,8 +61,9 @@ On the handheld, switch on **USB debugging** (Developer options) and tap **Allow
 The AppImage is built on Ubuntu 22.04 and checked on Ubuntu 22.04 and 24.04, Debian 12 and 13,
 Fedora, Arch, and openSUSE Leap 15.6 and Tumbleweed (`packaging/check-distros.sh`).
 
-**Flatpak (prepared, not yet built).** `packaging/build-flatpak.sh` needs `flatpak-builder`, the freedesktop
-26.08 SDK and the AppImage built first; it writes `dist/Jewelcase.flatpak`. The app id is
+**Flatpak (built and checked, not yet in a release).** `packaging/build-flatpak.sh` needs `flatpak-builder`, the
+freedesktop 26.08 SDK and the AppImage built first; it writes `dist/Jewelcase.flatpak`, and
+`packaging/check-flatpak.sh` starts that bundle in a throwaway installation. The app id is
 `dev.luismcastaneda.Jewelcase`. Inside a Flatpak, settings and data live under `~/.var/app/<id>/`, adb is downloaded into
 the app's data folder, and `7z` and `chdman` are not available. Details: `packaging/flatpak/README.md`.
 
@@ -387,6 +388,7 @@ uv run pytest -m device tests/device -s   # against a connected handheld
 packaging/build-appimage.sh               # needs podman; writes dist/Jewelcase-x86_64.AppImage
 packaging/check-distros.sh                # launches it on each distro
 packaging/build-flatpak.sh                # needs flatpak-builder and the SDK; writes dist/Jewelcase.flatpak
+packaging/check-flatpak.sh                # starts that bundle in a throwaway installation, on demo data
 ```
 
 The device tests marked `readonly` never write to the handheld. The `scratch` test writes only

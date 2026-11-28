@@ -50,7 +50,22 @@ Nothing in `src/` contains it: the app reads it from `FLATPAK_ID` at run time.
   Running the host's tools with `flatpak-spawn --host` would need `--talk-name=org.freedesktop.Flatpak`,
   which is a sandbox escape, so it is not done.
 
-## Not verified
+## Built and checked
 
-The Flatpak itself was not built where this was prepared (no flatpak-builder or SDK). What was run: the
-AppImage's tree inside the 26.08 runtime's sandbox with `--demo gui --selftest`.
+`packaging/build-flatpak.sh` builds the bundle with flatpak-builder 1.4.8 and Flatpak 1.16.6 against the
+26.08 runtimes, from the AppImage unchanged and with this manifest as it is: `dist/Jewelcase.flatpak`
+is about 39 MB and installs as about 155 MB.
+
+`packaging/check-flatpak.sh [bundle]` checks a bundle without installing it for you. It installs the
+bundle into a throwaway Flatpak user installation under `.flatpak-build/check` (`FLATPAK_USER_DIR`), with
+`HOME` pointed there as well, so nothing appears in the menus, `~/.local/share/flatpak` or `~/.var/app`,
+and it removes that folder when it ends. It prints one line per check and exits non-zero at the first
+that fails:
+
+- the bundle exists, and `flatpak` is installed;
+- it installs, against the Platform runtime already installed on the machine;
+- the desktop file, icon and metainfo are named after the app id, and the desktop file is exported;
+- `flatpak run --env=QT_QPA_PLATFORM=offscreen dev.luismcastaneda.Jewelcase --demo gui --selftest` prints
+  `selftest ok`, so the real bundle starts in its sandbox with the permissions above, on demo data.
+
+`7z` and `chdman` are still not inside; see above.
