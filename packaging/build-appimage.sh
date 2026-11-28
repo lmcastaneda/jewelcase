@@ -7,3 +7,4 @@ IMAGE=${JEWELCASE_BUILD_IMAGE:-docker.io/library/ubuntu:22.04}
 mkdir -p "$ROOT/dist"
 podman run --rm --security-opt label=disable -v "$ROOT":/src -w /src "$IMAGE" bash packaging/inside-container.sh
 ls -lh "$ROOT/dist/Jewelcase-x86_64.AppImage"
+# The finished app image lands in the dist folder.
