@@ -627,6 +627,112 @@ def test_the_fix_writer_cannot_push_or_post_and_the_job_that_does_runs_no_claude
     assert jobs["open"]["needs"] == ["pick", "write"]
 
 
+def git_env(tmp_path):
+    """Git with a made-up identity and none of this machine's configuration, as on GitHub's runner."""
+    empty = tmp_path / "gitconfig"
+    empty.touch()
+    who = {f"GIT_{role}_{part}": value for role in ("AUTHOR", "COMMITTER")
+           for part, value in (("NAME", "A Writer"), ("EMAIL", "writer@example.invalid"))}
+    return {"PATH": os.environ["PATH"], "HOME": str(tmp_path), "GIT_CONFIG_GLOBAL": str(empty),
+            "GIT_CONFIG_SYSTEM": str(empty), **who}
+
+
+def git(env, *args):
+    return subprocess.run(["git", *args], env=env, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def checked_out(tmp_path):
+    """The work tree as the fix writer's checkout leaves it: a clone of main. Returns it, git's env and the commit."""
+    env = git_env(tmp_path)
+    upstream = tmp_path / "upstream"
+    git(env, "init", "-q", "-b", "main", str(upstream))
+    (upstream / "README.md").write_text("base\n")
+    git(env, "-C", str(upstream), "add", "README.md")
+    git(env, "-C", str(upstream), "commit", "-q", "-m", "base")
+    work = tmp_path / "work"
+    git(env, "clone", "-q", str(upstream), str(work))
+    return work, env, git(env, "-C", str(work), "rev-parse", "HEAD")
+
+
+def commit(env, work, name):
+    (work / name).write_text(f"{name}\n")
+    git(env, "-C", str(work), "add", name)
+    git(env, "-C", str(work), "commit", "-q", "-m", f"Add {name}")
+    return git(env, "-C", str(work), "rev-parse", "HEAD")
+
+
+def pack(work, env, base):
+    """Run the step that packs the fix writer's work, as the job does. Returns the folder it fills."""
+    step = next(s for s in steps(workflow("fix.yml")["jobs"]["write"]) if s.get("name") == "Pack what Claude made")
+    runner = work.parent / "runner"
+    runner.mkdir()
+    env = {**env, "RUNNER_TEMP": str(runner), "GITHUB_WORKSPACE": str(work), "GITHUB_SHA": base}
+    done = subprocess.run(["bash", "-eo", "pipefail", "-c", step["run"]], env=env, cwd=work, capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    return runner / "out"
+
+
+def test_packing_the_fix_runs_nothing_the_session_left_in_the_repository(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    commit(env, work, "fix.py")
+    for name, path in (("hook", work / ".git" / "hooks" / "reference-transaction"), ("monitor", tmp_path / "monitor")):
+        path.write_text(f'#!/bin/sh\ntouch "{tmp_path}/{name}-ran"\n')
+        path.chmod(0o755)
+    git(env, "-C", str(work), "config", "core.fsmonitor", str(tmp_path / "monitor"))
+    assert (pack(work, env, base) / "fix.bundle").exists()
+    assert not (tmp_path / "hook-ran").exists() and not (tmp_path / "monitor-ran").exists()
+    # both are live: git run inside the work tree starts them
+    git(env, "-C", str(work), "status")
+    git(env, "-C", str(work), "branch", "probe")
+    assert (tmp_path / "hook-ran").exists() and (tmp_path / "monitor-ran").exists()
+
+
+def test_the_packed_fix_holds_exactly_the_commits_made_on_top_of_the_commit_that_was_checked_out(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    first = commit(env, work, "a.py")
+    tip = commit(env, work, "b.py")
+    git(env, "-C", str(work), "update-ref", "refs/remotes/origin/main", tip)     # whatever the work tree's refs say
+    bundle = pack(work, env, base) / "fix.bundle"
+    check = tmp_path / "check"
+    git(env, "clone", "-q", str(tmp_path / "upstream"), str(check))
+    git(env, "-C", str(check), "bundle", "verify", "-q", str(bundle))
+    assert git(env, "-C", str(check), "bundle", "list-heads", str(bundle)) == f"{tip} refs/heads/fix"
+    git(env, "-C", str(check), "fetch", "-q", str(bundle), "fix")
+    assert git(env, "-C", str(check), "rev-list", f"{base}..FETCH_HEAD").split() == [tip, first]
+
+
+def test_nothing_is_packed_when_claude_committed_nothing(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    assert not (pack(work, env, base) / "fix.bundle").exists()
+
+
+def test_nothing_is_packed_when_the_work_does_not_descend_from_the_commit_that_was_checked_out(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    git(env, "-C", str(work), "checkout", "-q", "--orphan", "elsewhere")
+    commit(env, work, "fix.py")
+    assert not (pack(work, env, base) / "fix.bundle").exists()
+
+
+def test_nothing_is_packed_and_the_step_still_succeeds_when_the_work_cannot_be_read(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    commit(env, work, "fix.py")
+    git(env, "-C", str(work), "symbolic-ref", "HEAD", "refs/heads/nowhere")
+    assert not (pack(work, env, base) / "fix.bundle").exists()
+
+
+def test_the_texts_for_the_pull_request_are_copied_and_a_link_in_their_place_is_not_followed(tmp_path):
+    work, env, base = checked_out(tmp_path)
+    (work / ".fix").mkdir()
+    (work / ".fix" / "title.txt").write_text("Fix the thing\n")
+    (work / ".fix" / "body.md").write_text("What was wrong.\n")
+    (tmp_path / "private").write_text("not for the pull request\n")
+    (work / ".fix" / "note.md").symlink_to(tmp_path / "private")
+    out = pack(work, env, base)
+    assert (out / "title.txt").read_text() == "Fix the thing\n"
+    assert (out / "body.md").read_text() == "What was wrong.\n"
+    assert not (out / "note.md").exists()
+
+
 def test_the_reviewer_can_only_look():
     step, = claude_steps(workflow("gate.yml")["jobs"]["review"])
     assert all(t in ("Read", "Grep", "Glob") or t.startswith(("Bash(gh pr view:", "Bash(gh pr diff:",

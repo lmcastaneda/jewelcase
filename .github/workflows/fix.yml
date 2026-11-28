@@ -133,9 +133,14 @@ jobs:
         run: |
           out="$RUNNER_TEMP/out"
           mkdir -p "$out"
-          if [ -n "$(git rev-list origin/main..HEAD | head -n 1)" ]; then
-            git branch -f fix HEAD
-            git bundle create "$out/fix.bundle" origin/main..fix
+          # Git runs only in a new repository, never in the work tree the session left, and the fix
+          # is measured from the commit this job checked out.
+          clean="$(mktemp -d "$RUNNER_TEMP/clean.XXXXXX")"
+          git init -q --bare --initial-branch=fix "$clean"
+          if git -C "$clean" fetch -q --no-tags "$GITHUB_WORKSPACE" HEAD:refs/heads/fix \
+            && git -C "$clean" merge-base --is-ancestor "$GITHUB_SHA" fix \
+            && [ "$(git -C "$clean" rev-parse fix)" != "$GITHUB_SHA" ]; then
+            git -C "$clean" bundle create "$out/fix.bundle" "$GITHUB_SHA..fix"
           fi
           for name in title.txt body.md note.md; do
             if [ -f ".fix/$name" ] && [ ! -L ".fix/$name" ]; then
