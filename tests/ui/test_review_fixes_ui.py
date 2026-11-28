@@ -204,3 +204,26 @@ def test_adding_to_the_menu_says_so(win, monkeypatch, tmp_path):
     monkeypatch.setattr(integrate, "install_menu_entry", lambda exe, home=None: tmp_path / "jewelcase.desktop")
     win.add_to_menu()
     assert win.toast.label.text() == "Jewelcase was added to the applications menu"
+
+
+def test_a_menu_entry_that_cannot_be_written_shows_a_toast_and_leaves_the_action_in_the_menu(win, monkeypatch,
+                                                                                             tmp_path):
+    from jewelcase.core import integrate
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+    monkeypatch.delenv("FLATPAK_ID", raising=False)
+    monkeypatch.setattr(integrate, "FLATPAK_INFO", tmp_path / "no-flatpak-info")
+    app = tmp_path / "Jewelcase.AppImage"
+    app.write_bytes(b"x")
+    monkeypatch.setenv("APPIMAGE", str(app))
+    folder = home / ".local/share/applications"
+    folder.mkdir(parents=True)
+    folder.chmod(0o555)
+    try:
+        win.add_to_menu()
+        win._update_menu()
+    finally:
+        folder.chmod(0o755)
+    assert win.toast.label.text() == "Could not add Jewelcase to the applications menu (Permission denied)"
+    assert win._menu_entry_action.isVisible()

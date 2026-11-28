@@ -5,6 +5,7 @@ import argparse
 import json
 import sys
 from dataclasses import asdict
+from pathlib import Path
 
 from . import __version__
 from .core import catalog, integrate, smartlists
@@ -291,10 +292,24 @@ def cmd_install_menu_entry(args) -> int:
             said = "Only the AppImage can add itself to the applications menu."
             _out(args, {"written": False, "error": said}, said)
             return 2
-        integrate.install_menu_entry(exe)
+        try:
+            integrate.install_menu_entry(exe)
+        except OSError as err:
+            said = _not_added(err, desktop, icon)
+            _out(args, {"written": False, "error": said}, said)
+            return 2
         written, said = True, "Jewelcase was added to the applications menu."
     _out(args, {"written": written, "desktop": str(desktop), "icon": str(icon)}, f"{said}\n  {desktop}\n  {icon}")
     return 0
+
+
+def _not_added(err: OSError, desktop: Path, icon: Path) -> str:
+    """The sentence for a menu entry that could not be written: where, and the system's reason."""
+    where = Path(err.filename) if err.filename else desktop.parent
+    if where.parent in (desktop.parent, icon.parent):
+        where = where.parent        # the entry, the icon or a temporary name of theirs: name the folder they go in
+    return (f"Jewelcase could not be added to the applications menu: {where} could not be written "
+            f"({err.strerror or err}).")
 
 
 def build_parser() -> argparse.ArgumentParser:
