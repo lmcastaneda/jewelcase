@@ -1,5 +1,6 @@
 # The test suite: on every pull request, on main, and when the fix workflow starts it for one of Claude's
 # fixes. It holds no secrets and cannot write anywhere, so it is safe to run on code from anyone.
+# The report workflow passes its result on as the status `tests`.
 name: tests
 
 on:
