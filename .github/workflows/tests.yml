@@ -1,6 +1,6 @@
 # The test suite: on every pull request, on main, and when the fix workflow starts it for one of Claude's
-# fixes. It holds no secrets and cannot write anywhere, so it is safe to run on code from anyone.
-# The report workflow passes its result on as the status `tests`.
+# fixes. The job that runs the code holds no secrets and cannot write anywhere, so it is safe to run on
+# code from anyone.
 name: tests
 
 on:
@@ -40,3 +40,33 @@ jobs:
         run: |
           uv sync --frozen
           uv run pytest -q
+
+  # For one of Claude's fixes the fix workflow starts this run. GitHub does not count the checks of a run
+  # that another workflow started, and it holds the pull request's own run until a person approves it. So
+  # say how the tests ended as the status `tests`: a status is tied to the commit and does count.
+  # This job runs after the code, on another machine: it checks nothing out and runs none of it.
+  report:
+    needs: tests
+    if: always() && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      statuses: write
+    steps:
+      - name: Report how the tests ended
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RESULT: ${{ needs.tests.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if ! [[ "$SHA" =~ ^[0-9a-f]{40}$ ]]; then echo "Not a commit."; exit 0; fi
+          case "$RESULT" in
+            success) state=success; text="The tests pass" ;;
+            failure) state=failure; text="The tests fail" ;;
+            # stopped before the end: say so, or the pull request waits for ever. A later run reports afresh.
+            *) state=failure; text="The tests did not finish" ;;
+          esac
+          gh api -X POST "repos/$GH_REPO/statuses/$SHA" -f state="$state" -f context=tests \
+            -f description="$text" -f target_url="$RUN_URL" >/dev/null

@@ -212,7 +212,7 @@ jobs:
           url=$(gh pr create --base main --head "$branch" --title "$title" --body-file "$RUNNER_TEMP/body.md")
           pr="${url##*/}"
           # GitHub holds the tests of a pull request that a workflow opened until a person approves them,
-          # so start them here; the report workflow passes their result on as the status main requires.
+          # so start them here; that run reports its result as the status main requires.
           # The gate is started the same way.
           gh workflow run tests.yml --ref "$branch"
           gh workflow run gate.yml --ref main -f pr="$pr"

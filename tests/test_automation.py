@@ -465,59 +465,59 @@ def test_the_decision_is_taken_again_from_fresh_facts_after_the_review():
     assert "--match-head-commit" in text
 
 
-def test_the_tests_workflow_holds_no_secrets_and_cannot_write():
+def test_the_job_that_runs_the_tests_holds_no_secrets_and_cannot_write():
     doc = workflow("tests.yml")
-    assert doc["jobs"]["tests"]["permissions"] == {"contents": "read"}
+    assert doc["jobs"]["tests"]["permissions"] == {"contents": "read"}      # the job that runs the code
+    assert set(doc["jobs"]) == {"tests", "report"}
     assert "secrets." not in (WORKFLOWS / "tests.yml").read_text()
     assert "workflow_dispatch" in doc["on"]             # how the tests are started on one of Claude's fixes
 
 
-def report(tmp_path, result, sha="a" * 40, file=".github/workflows/tests.yml"):
-    """Run the report workflow's one step with a stand-in for gh. Returns what it asked gh to do."""
-    step, = steps(workflow("report.yml")["jobs"]["status"])
+def report(tmp_path, result, sha="a" * 40):
+    """Run the step that reports the tests' result, with a stand-in for gh. Returns what it asked gh to do."""
+    step, = steps(workflow("tests.yml")["jobs"]["report"])
     log = tmp_path / "gh.log"
     gh = tmp_path / "gh"
     gh.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$GH_LOG"\n')
     gh.chmod(0o755)
     env = {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}", "GH_LOG": str(log), "GH_REPO": "someone/jewelcase",
-           "SHA": sha, "RESULT": result, "FILE": file, "RUN_URL": "https://example.invalid/run/1"}
+           "SHA": sha, "RESULT": result, "RUN_URL": "https://example.invalid/run/1"}
     done = subprocess.run(["bash", "-eo", "pipefail", "-c", step["run"]], env=env, capture_output=True, text=True)
     assert done.returncode == 0, done.stderr
     return log.read_text() if log.exists() else ""
 
 
-def test_the_result_of_the_tests_reaches_the_pull_request_as_a_status_posted_from_main():
+def test_the_tests_started_for_one_of_claudes_fixes_report_their_result_as_a_status():
     """GitHub does not count the checks of a run that another workflow started, and it holds the tests of a
-    pull request that a workflow opened until a person approves them. So a small workflow, which always
-    runs from main, passes the result of every run of the tests on as the status `tests`."""
-    doc = workflow("report.yml")
-    assert doc["on"] == {"workflow_run": {"workflows": [workflow("tests.yml")["name"]], "types": ["completed"]}}
-    job = doc["jobs"]["status"]
+    pull request that a workflow opened until a person approves them. So when the fix workflow starts the
+    tests, a second job says how they ended as the status `tests`, which is tied to the commit and counts.
+    That job runs after the code, on another machine, and runs none of it."""
+    jobs = workflow("tests.yml")["jobs"]
+    job = jobs["report"]
+    assert job["needs"] == "tests"
+    assert job["if"] == "always() && github.event_name == 'workflow_dispatch'"
     assert job["permissions"] == {"statuses": "write"}
-    assert not any("uses" in s for s in steps(job))     # it checks nothing out and runs nobody's code
+    assert not any("uses" in s for s in steps(job))     # it checks nothing out
     step, = steps(job)
-    assert step["env"]["SHA"] == "${{ github.event.workflow_run.head_sha }}"
-    assert step["env"]["RESULT"] == "${{ github.event.workflow_run.conclusion }}"
-    assert step["env"]["FILE"] == "${{ github.event.workflow_run.path }}"
+    assert step["env"]["SHA"] == "${{ github.sha }}"
+    assert step["env"]["RESULT"] == "${{ needs.tests.result }}"
+    assert not (WORKFLOWS / "report.yml").exists()      # a workflow_run workflow is not started for such a run
 
 
-@pytest.mark.parametrize("result, state", [("success", "success"), ("failure", "failure"),
-                                           ("timed_out", "failure"), ("startup_failure", "failure")])
-def test_a_finished_run_of_the_tests_is_reported_for_its_commit(tmp_path, result, state):
-    asked = report(tmp_path, result, sha="0123456789abcdef0123456789abcdef01234567")
-    call, = asked.splitlines()
+def test_tests_that_pass_are_reported_for_their_commit(tmp_path):
+    call, = report(tmp_path, "success", sha="0123456789abcdef0123456789abcdef01234567").splitlines()
     assert "repos/someone/jewelcase/statuses/0123456789abcdef0123456789abcdef01234567" in call
-    assert f"state={state}" in call and "context=tests" in call
+    assert "state=success" in call and "context=tests" in call
 
 
-@pytest.mark.parametrize("result", ["action_required", "cancelled", "skipped", "neutral", "stale", ""])
-def test_a_run_that_was_held_or_stopped_reports_nothing(tmp_path, result):
-    """A run that waits for approval or was cancelled says nothing about the code: an earlier result stays."""
-    assert report(tmp_path, result) == ""
+@pytest.mark.parametrize("result", ["failure", "cancelled", "skipped", ""])
+def test_tests_that_fail_or_do_not_finish_are_reported_as_failed(tmp_path, result):
+    """A pull request must not wait for ever on tests that were stopped: a later run reports afresh."""
+    call, = report(tmp_path, result).splitlines()
+    assert "state=failure" in call and "context=tests" in call
 
 
-def test_only_the_real_tests_workflow_and_a_real_commit_are_reported(tmp_path):
-    assert report(tmp_path, "success", file=".github/workflows/other.yml") == ""
+def test_nothing_is_reported_for_something_that_is_not_a_commit(tmp_path):
     assert report(tmp_path, "success", sha="main; echo") == ""
 
 
@@ -540,5 +540,5 @@ def test_a_release_is_built_only_from_a_version_tag():
 def test_the_checks_main_requires_are_the_ones_the_workflows_report():
     setup = (SCRIPTS / "setup_repo.sh").read_text()
     assert '"context": "tests"' in setup and "tests" in workflow("tests.yml")["jobs"]
-    assert "context=tests" in (WORKFLOWS / "report.yml").read_text()
+    assert "context=tests" in (WORKFLOWS / "tests.yml").read_text()
     assert '"context": "gate"' in setup and "context=gate" in (WORKFLOWS / "gate.yml").read_text()
