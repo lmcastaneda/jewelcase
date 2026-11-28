@@ -55,6 +55,21 @@ def test_untick_list_then_plan_json(capsys, demo):
     assert plan["fits"] is True and plan["free_after"] > plan["free_before"]
 
 
+def test_tick_list_puts_the_whole_list_back(capsys, demo):
+    never = {g["key"] for g in run_json(capsys, demo, "games", "--list", "never_played")}
+    run(capsys, demo, "untick", "--list", "never_played")
+    assert {i["key"] for i in run_json(capsys, demo, "plan")["remove"]} == never
+    code, out = run(capsys, demo, "tick", "--list", "never_played")
+    assert code == 0 and str(len(never)) in out
+    plan = run_json(capsys, demo, "plan")
+    assert plan["remove"] == [] and plan["add"] == []
+
+
+def test_tick_without_keys_or_list_says_what_to_name(capsys, demo):
+    code, out = run(capsys, demo, "tick")
+    assert code == 2
+
+
 def test_tick_unknown_key_fails(capsys, demo):
     code, out = run(capsys, demo, "tick", "ps2/No Such Game")
     assert code == 2

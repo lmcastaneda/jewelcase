@@ -312,7 +312,8 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--list", metavar="LIST", help="a smart list, by id or name (`jewelcase lists` shows them)")
     g.add_argument("--system")
     t = sub.add_parser("tick", help="mark games to be on the device (KEY is system/stem)")
-    t.add_argument("keys", nargs="+", metavar="KEY")
+    t.add_argument("keys", nargs="*", metavar="KEY")
+    t.add_argument("--list", metavar="LIST", help="a smart list, by id or name (`jewelcase lists` shows them)")
     u = sub.add_parser("untick", help="mark games to leave the device")
     u.add_argument("keys", nargs="*", metavar="KEY")
     u.add_argument("--list", metavar="LIST", help="a smart list, by id or name (`jewelcase lists` shows them)")
@@ -387,13 +388,11 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_device(s, args)
         if cmd == "games":
             return cmd_games(s, args)
-        if cmd == "tick":
-            return cmd_tick(s, args, True)
-        if cmd == "untick":
+        if cmd in ("tick", "untick"):
             if not args.keys and not args.list:
                 print("Name games or use --list.")
                 return 2
-            return cmd_tick(s, args, False)
+            return cmd_tick(s, args, cmd == "tick")
         if cmd == "lists":
             return cmd_lists(s, args)
         if cmd == "plan":
