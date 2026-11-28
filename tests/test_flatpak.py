@@ -66,6 +66,35 @@ def test_the_build_script_is_valid_shell_and_names_the_same_id():
     assert f"APP_ID={APP_ID}" in script.read_text()
 
 
+CHECK_SCRIPT = ROOT / "packaging/check-flatpak.sh"
+
+
+def test_the_check_script_is_valid_shell_and_names_the_same_id_as_the_manifest():
+    assert subprocess.run(["bash", "-n", str(CHECK_SCRIPT)]).returncode == 0
+    assert f"APP_ID={manifest()['app-id']}" in CHECK_SCRIPT.read_text()
+
+
+def test_the_check_script_runs_the_app_only_with_demo_and_never_adb():
+    lines = [line.split("#")[0] for line in CHECK_SCRIPT.read_text().splitlines()]
+    runs = [line for line in lines if "flatpak run" in line or "--command" in line]
+    assert runs and all("--demo gui --selftest" in line for line in runs), runs
+    assert not any("adb" in line for line in lines)
+
+
+def test_the_check_script_keeps_its_flatpak_installation_and_home_inside_the_build_folder():
+    text = CHECK_SCRIPT.read_text()
+    assert 'CHECK="$ROOT/.flatpak-build/' in text
+    assert 'export FLATPAK_USER_DIR="$CHECK/' in text and 'export HOME="$CHECK/' in text
+    assert "flatpak install --user" in text and "flatpak install --system" not in text
+
+
+def test_the_check_script_fails_with_a_plain_line_when_the_bundle_is_missing(tmp_path):
+    result = subprocess.run(["bash", str(CHECK_SCRIPT), str(tmp_path / "missing.flatpak")],
+                            capture_output=True, text=True)
+    assert result.returncode != 0
+    assert result.stdout.splitlines()[-1].startswith("FAIL")
+
+
 def test_the_window_class_in_the_desktop_file_is_the_id_the_app_sets_inside_the_flatpak(monkeypatch):
     from jewelcase.core import integrate
     monkeypatch.setenv("FLATPAK_ID", APP_ID)
