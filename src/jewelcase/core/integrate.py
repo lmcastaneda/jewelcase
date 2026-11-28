@@ -105,24 +105,25 @@ def refresh_icon_cache(home: Path | None = None) -> None:
         return
     with contextlib.suppress(OSError, subprocess.SubprocessError):     # a non-zero exit is ignored too
         subprocess.run([tool, "-f", "-t", str(hicolor)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL, timeout=10, env=_host_env())
+                       stderr=subprocess.DEVNULL, timeout=10)
 
 
-def _host_env() -> dict[str, str] | None:
-    """The environment to start a host program with; None (unchanged) when running from source.
+def use_host_libraries() -> None:
+    """In the packaged app, give every program started from now on the library path the user had.
 
     The packaged app puts its own library folder on LD_LIBRARY_PATH, and a host program loading those
-    libraries can fail to start. PyInstaller keeps the user's value in LD_LIBRARY_PATH_ORIG.
+    libraries can fail to start. PyInstaller keeps the user's value in LD_LIBRARY_PATH_ORIG. Run from
+    source, nothing changes.
     """
+    # Safe for the app itself: the loader read LD_LIBRARY_PATH when the process started, so the app keeps
+    # finding its own libraries; only programs started afterwards see the change. Checked on glibc 2.43.
     if not getattr(sys, "frozen", False):
-        return None
-    env = dict(os.environ)
-    orig = env.get("LD_LIBRARY_PATH_ORIG")
+        return
+    orig = os.environ.get("LD_LIBRARY_PATH_ORIG")
     if orig is not None:
-        env["LD_LIBRARY_PATH"] = orig
+        os.environ["LD_LIBRARY_PATH"] = orig
     else:
-        env.pop("LD_LIBRARY_PATH", None)
-    return env
+        os.environ.pop("LD_LIBRARY_PATH", None)
 
 
 def remove_menu_entry(home: Path | None = None) -> None:

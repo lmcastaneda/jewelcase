@@ -10,6 +10,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtNetwork import QLocalServer
 
+from jewelcase.core import integrate
 from jewelcase.core.fakedevice import FakeDevice
 from jewelcase.ui import models, shell
 
@@ -49,6 +50,29 @@ def test_notify_without_a_session_bus_is_silent():
     cp = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env, timeout=60)
     assert cp.returncode == 0, cp.stderr
     assert cp.stdout.split() == ["False", "fine"]
+
+
+def test_from_the_packaged_app_notify_send_and_gdbus_after_it_get_the_hosts_library_path(tmp_path, monkeypatch):
+    folder = tmp_path / "bin"
+    folder.mkdir()
+
+    def stand_in(name, code):
+        tool = folder / name
+        tool.write_text(f'#!/bin/sh\necho "${{LD_LIBRARY_PATH-unset}}" >> "{tmp_path / name}.txt"\nexit {code}\n')
+        tool.chmod(0o755)
+
+    monkeypatch.setenv("PATH", str(folder))
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setenv("LD_LIBRARY_PATH", str(tmp_path / "bundle/_internal"))     # as the packaged app has it
+    monkeypatch.setenv("LD_LIBRARY_PATH_ORIG", "/host/lib")
+    integrate.use_host_libraries()                                                 # as main does first
+    stand_in("notify-send", 0)
+    assert shell.notify("Sync finished") is True
+    stand_in("notify-send", 1)
+    stand_in("gdbus", 0)
+    assert shell.notify("Sync finished") is True
+    assert (tmp_path / "notify-send.txt").read_text() == "/host/lib\n/host/lib\n"
+    assert (tmp_path / "gdbus.txt").read_text() == "/host/lib\n"
 
 
 def test_single_instance_second_launch_activates_the_first(qapp):
