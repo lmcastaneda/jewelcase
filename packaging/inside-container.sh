@@ -12,8 +12,30 @@ apt-get install -y -qq --no-install-recommends \
     libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-xfixes0 libxcb-sync1 libxcb-shm0 libxcb-render0 \
     libx11-xcb1 libwayland-client0 libwayland-cursor0 libwayland-egl1 >/dev/null
 
-curl -LsSf https://astral.sh/uv/install.sh | sh >/dev/null 2>&1
-export PATH="$HOME/.local/bin:$PATH"
+# The tools the build downloads, each at an exact version and checked against its sha256 before it
+# runs. To move one, change both lines together (the release page lists each file's sha256).
+UV_VERSION=0.13.10
+UV_SHA256=bf65ac1a0af10f92c522d91ac096c7c0a39657647b155577e7836c2cbbb4526c
+APPIMAGETOOL_VERSION=1.9.1
+APPIMAGETOOL_SHA256=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
+
+# fetch URL SHA256 DEST: download under a temporary name and give it its real name only once checked.
+fetch() {
+    curl -LsSf -o "$3.part" "$1"
+    if ! echo "$2  $3.part" | sha256sum --check --status; then
+        echo "checksum mismatch, stopping: $1" >&2
+        rm -f "$3.part"
+        exit 1
+    fi
+    mv "$3.part" "$3"
+}
+fetch "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-x86_64-unknown-linux-gnu.tar.gz" "$UV_SHA256" /tmp/uv.tar.gz
+fetch "https://github.com/AppImage/appimagetool/releases/download/${APPIMAGETOOL_VERSION}/appimagetool-x86_64.AppImage" "$APPIMAGETOOL_SHA256" /tmp/appimagetool
+chmod +x /tmp/appimagetool
+
+mkdir -p /tmp/uv-bin
+tar -xzf /tmp/uv.tar.gz -C /tmp/uv-bin --strip-components=1
+export PATH="/tmp/uv-bin:$PATH"
 export UV_PROJECT_ENVIRONMENT=/tmp/venv UV_CACHE_DIR=/tmp/uv-cache UV_LINK_MODE=copy
 uv python install 3.12 >/dev/null
 uv sync --python 3.12 --no-dev --frozen
@@ -44,9 +66,6 @@ cp /src/src/jewelcase/data/jewelcase.svg "$APPDIR/jewelcase.svg"
 cp /src/src/jewelcase/data/jewelcase.svg "$APPDIR/.DirIcon"
 desktop-file-validate "$APPDIR/jewelcase.desktop"
 
-curl -LsS -o /tmp/appimagetool \
-    https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-chmod +x /tmp/appimagetool
 ARCH=x86_64 /tmp/appimagetool --appimage-extract-and-run --no-appstream "$APPDIR" /src/dist/Jewelcase-x86_64.AppImage
 chmod 755 /src/dist/Jewelcase-x86_64.AppImage
 chown "$(stat -c %u:%g /src)" /src/dist/Jewelcase-x86_64.AppImage 2>/dev/null || true
