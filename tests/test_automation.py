@@ -28,6 +28,7 @@ def load(name):
 gate = load("merge_gate")
 issue_action = load("issue_action")
 pick = load("pick_issue")
+rel = load("release_plan")
 
 
 # ---------------------------------------------------------------- what merges by itself
@@ -67,7 +68,7 @@ def test_a_persons_pull_request_is_never_merged_by_the_gate_and_never_blocked_by
 
 @pytest.mark.parametrize("path", [
     "src/jewelcase/core/plan.py", "src/jewelcase/ui/window.py", "tests/test_plan.py", "tests/ui/test_window.py",
-    "README.md"])
+    "src/jewelcase/core/__init__.py", "README.md"])
 def test_a_fix_may_change_code_tests_and_the_readme(path):
     assert gate.allowed(path)
 
@@ -78,7 +79,8 @@ def test_a_fix_may_change_code_tests_and_the_readme(path):
     "setup.cfg", "conftest.py", "tests/conftest.py", "tests/ui/uihelpers.py", "packaging/build-appimage.sh",
     "SECURITY.md", "CONTRIBUTING.md", "docs/how-this-was-built.md", "tests/test_automation.py",
     "src/jewelcase/data/emulators.toml", "src/jewelcase/data/jewelcase.svg", ".gitattributes", ".python-version",
-    "notes.txt", "src/other/thing.py", "src/jewelcase/../../x.py", "tests/test_x.py/..", "", "README.md/x"])
+    "notes.txt", "src/other/thing.py", "src/jewelcase/../../x.py", "tests/test_x.py/..", "", "README.md/x",
+    "src/jewelcase/__init__.py"])                       # it states the version, which decides on releases
 def test_anything_else_waits_for_the_maintainer(path):
     assert not gate.allowed(path)
     d = gate.decide(pr(files=pr()["files"] + files(path)), APPROVE)
@@ -358,6 +360,164 @@ def test_a_fixed_issue_is_closed_with_a_word_and_no_longer_marked_as_taken(monke
                        ("issue", "edit", "4", "--remove-label", "claude:working")]
 
 
+# ---------------------------------------------------------------- when a release is made
+PYPROJECT = '[project]\nname = "jewelcase"\nversion = "0.2.0"\n\n[tool.other]\nversion = "9"\n'
+INIT = '"""Jewelcase."""\n__version__ = "0.2.0"\n'
+HEAD = "b" * 40
+
+
+def release(**over):
+    base = {"version": "0.2.0", "init": "0.2.0", "released": ["v0.1.0"], "tag_sha": None, "head_sha": HEAD,
+            "ref": "refs/heads/main", "before": None}
+    return rel.plan(**{**base, **over})
+
+
+def test_a_version_on_main_that_was_never_released_is_released():
+    assert release()["do"] == "release"
+    assert release(released=[])["do"] == "release"                  # the very first one
+    assert release(released=["v0.1.0", "nightly", "v0.1.10"], version="0.1.11", init="0.1.11")["do"] == "release"
+
+
+def test_a_version_that_is_released_already_is_left_alone():
+    """Most changes to pyproject.toml, and every fix that merges by itself, leave the version as it is."""
+    assert release(released=["v0.1.0", "v0.2.0"])["do"] == "nothing"
+
+
+def test_a_change_to_pyproject_that_leaves_the_version_alone_releases_nothing():
+    """Also before the first release: adding a dependency must not publish whatever version stands there."""
+    assert release(before="0.2.0", released=[])["do"] == "nothing"
+    assert release(before="0.1.0", released=[])["do"] == "release"      # the push raised it
+    assert release(before="", released=[])["do"] == "release"           # the file stated none before
+    assert release(before=None, released=[])["do"] == "release"         # the maintainer started it by hand
+
+
+def test_a_push_that_lowered_the_version_is_refused():
+    assert release(before="0.3.0", released=[])["do"] == "refuse"
+    assert release(before="0.10.0", version="0.9.0", init="0.9.0", released=[])["do"] == "refuse"
+
+
+def test_no_release_while_the_two_places_that_state_the_version_disagree():
+    decision = release(init="0.1.0")
+    assert decision["do"] == "refuse" and "0.1.0" in decision["why"] and "0.2.0" in decision["why"]
+
+
+@pytest.mark.parametrize("version", ["", "1.2", "1.2.3rc1", "v1.2.3", "01.2.3", "1.2.3 && echo", "1.2.3\n", None])
+def test_a_version_that_is_not_three_plain_numbers_is_never_released(version):
+    assert release(version=version, init=version)["do"] == "refuse"
+
+
+def test_a_version_lower_than_one_already_released_is_refused():
+    assert release(released=["v0.3.0"])["do"] == "refuse"
+    assert release(released=["v0.10.0"], version="0.9.0", init="0.9.0")["do"] == "refuse"   # 10 is more than 9
+
+
+def test_a_release_is_made_from_main_only():
+    assert release(ref="refs/heads/some-branch")["do"] == "refuse"
+    assert release(ref="refs/tags/v0.2.0")["do"] == "refuse"
+
+
+def test_a_tag_that_marks_another_commit_stops_the_release():
+    assert release(tag_sha="c" * 40)["do"] == "refuse"
+    assert release(tag_sha=HEAD)["do"] == "release"                 # a second try after a failed one
+
+
+def test_raising_the_version_changes_the_two_places_and_nothing_else():
+    pyproject, init = rel.bumped(PYPROJECT, INIT, "0.3.0")
+    assert rel.project_version(pyproject) == "0.3.0" and rel.init_version(init) == "0.3.0"
+    assert pyproject == PYPROJECT.replace('version = "0.2.0"', 'version = "0.3.0"')
+    assert init == INIT.replace("0.2.0", "0.3.0")
+
+
+@pytest.mark.parametrize("new", ["0.2.0", "0.1.9", "1.0", "next", "0.3.0 && echo", "", "v0.3.0"])
+def test_the_version_only_goes_up_and_only_to_three_plain_numbers(new):
+    with pytest.raises(ValueError):
+        rel.bumped(PYPROJECT, INIT, new)
+
+
+def test_the_projects_own_files_state_one_version():
+    version = rel.project_version((ROOT / "pyproject.toml").read_text())
+    assert rel.VERSION.fullmatch(version)
+    assert rel.init_version((ROOT / "src" / "jewelcase" / "__init__.py").read_text()) == version
+
+
+def not_found():
+    return subprocess.CalledProcessError(1, "gh", stderr="gh: Not Found (HTTP 404)")
+
+
+def test_a_tag_is_read_whether_it_marks_the_commit_directly_or_through_a_tag_with_a_message(monkeypatch):
+    answers = {"repos/o/r/git/ref/tags/v1.0.0": {"object": {"type": "commit", "sha": "c" * 40}},
+               "repos/o/r/git/ref/tags/v2.0.0": {"object": {"type": "tag", "sha": "d" * 40}},
+               f"repos/o/r/git/tags/{'d' * 40}": {"object": {"type": "commit", "sha": "e" * 40}}}
+
+    def gh(*args):
+        if args[1] in answers:
+            return json.dumps(answers[args[1]])
+        raise not_found()
+
+    monkeypatch.setattr(rel, "_gh", gh)
+    assert rel._tag_commit("o/r", "v1.0.0") == "c" * 40
+    assert rel._tag_commit("o/r", "v2.0.0") == "e" * 40
+    assert rel._tag_commit("o/r", "v3.0.0") is None
+
+
+def test_a_tag_that_cannot_be_read_is_not_taken_for_a_tag_that_is_not_there(monkeypatch):
+    def gh(*args):
+        raise subprocess.CalledProcessError(1, "gh", stderr="gh: Bad Gateway (HTTP 502)")
+
+    monkeypatch.setattr(rel, "_gh", gh)
+    with pytest.raises(subprocess.CalledProcessError):
+        rel._tag_commit("o/r", "v1.0.0")
+
+
+def planned(tmp_path, monkeypatch, publish, released=(), before=None):
+    """Run the plan command in a made-up checkout. Returns what it told the workflow.
+
+    `before` is the version on main before the push that started the run; None for a run started by hand.
+    """
+    (tmp_path / "src" / "jewelcase").mkdir(parents=True)
+    (tmp_path / "pyproject.toml").write_text(PYPROJECT)
+    (tmp_path / "src" / "jewelcase" / "__init__.py").write_text(INIT)
+    out = tmp_path / "out.txt"
+    monkeypatch.chdir(tmp_path)
+    for name, value in {"GITHUB_OUTPUT": str(out), "GITHUB_SHA": HEAD, "GITHUB_REF": "refs/heads/main",
+                        "GH_REPO": "someone/jewelcase", "PUBLISH": publish}.items():
+        monkeypatch.setenv(name, value)
+
+    monkeypatch.setenv("BEFORE", "a" * 40 if before is not None else "")
+
+    def gh(*args):
+        if args[:2] == ("release", "list"):
+            return json.dumps([{"tagName": tag, "isDraft": False} for tag in released])
+        if args[0] == "api" and f"contents/pyproject.toml?ref={'a' * 40}" in args[1]:
+            return PYPROJECT.replace("0.2.0", before)
+        raise not_found()                                                       # no such tag
+
+    monkeypatch.setattr(rel, "_gh", gh)
+    code = rel.main(["plan"])
+    return code, dict(line.split("=", 1) for line in out.read_text().splitlines())
+
+
+def test_the_plan_command_tells_the_workflow_what_to_do(tmp_path, monkeypatch):
+    assert planned(tmp_path, monkeypatch, "true") == (0, {"do": "release", "version": "0.2.0"})
+
+
+def test_a_push_releases_only_if_it_raised_the_version(tmp_path, monkeypatch):
+    assert planned(tmp_path, monkeypatch, "true", before="0.1.0") == (0, {"do": "release", "version": "0.2.0"})
+
+
+def test_a_push_that_left_the_version_alone_releases_nothing(tmp_path, monkeypatch):
+    assert planned(tmp_path, monkeypatch, "true", before="0.2.0") == (0, {"do": "nothing", "version": "0.2.0"})
+
+
+def test_a_trial_builds_and_publishes_nothing_whatever_the_plan(tmp_path, monkeypatch):
+    assert planned(tmp_path, monkeypatch, "false") == (0, {"do": "trial", "version": "0.2.0"})
+
+
+def test_a_refused_release_fails_the_run_so_that_it_is_seen(tmp_path, monkeypatch):
+    code, told = planned(tmp_path, monkeypatch, "true", released=["v0.5.0"])
+    assert code == 1 and told["do"] == "refuse"
+
+
 # ---------------------------------------------------------------- the workflow files
 def workflow(name):
     doc = yaml.safe_load((WORKFLOWS / name).read_text())
@@ -573,7 +733,8 @@ def test_nothing_is_reported_for_something_that_is_not_a_commit(tmp_path):
 
 def test_only_these_jobs_may_write_to_the_repository_and_none_of_them_runs_a_strangers_text_through_claude():
     writers = {f"{file}:{name}" for file, name, job, _ in all_jobs() if job["permissions"].get("contents") == "write"}
-    assert writers == {"fix.yml:open", "gate.yml:merge", "release.yml:release", "claude.yml:claude"}
+    assert writers == {"fix.yml:open", "gate.yml:merge", "release.yml:publish", "release.yml:propose",
+                       "claude.yml:claude"}
 
 
 def test_the_maintainers_claude_answers_only_people_who_belong_to_the_repository():
@@ -583,8 +744,111 @@ def test_the_maintainers_claude_answers_only_people_who_belong_to_the_repository
         assert who in job["if"]
 
 
-def test_a_release_is_built_only_from_a_version_tag():
-    assert workflow("release.yml")["on"] == {"push": {"tags": ["v*"]}}
+def test_a_release_starts_when_the_version_on_main_changes_or_when_the_maintainer_starts_it():
+    """Raising the version is a change to pyproject.toml, which never merges by itself: a person decides."""
+    on = workflow("release.yml")["on"]
+    assert set(on) == {"push", "workflow_dispatch"}
+    assert on["push"] == {"branches": ["main"], "paths": ["pyproject.toml"]}
+    assert not gate.allowed("pyproject.toml")
+    jobs = workflow("release.yml")["jobs"]
+    plan, = [s for s in steps(jobs["plan"]) if s.get("id") == "plan"]
+    assert plan["env"]["BEFORE"] == "${{ github.event.before }}"     # so that only a raised version releases
+    # Publishing happens on main only, and by hand only when the owner starts it: several jobs of the
+    # automation may start workflows, and none of them may start a release.
+    by_the_owner = "github.actor == github.repository_owner"
+    assert plan["env"]["PUBLISH"] == ("${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || "
+                                      f"(inputs.publish && {by_the_owner})) }}}}")
+    assert jobs["publish"]["if"] == ("needs.plan.outputs.do == 'release' && github.ref == 'refs/heads/main' && "
+                                     f"(github.event_name == 'push' || {by_the_owner})")
+    assert jobs["propose"]["if"] == f"github.event_name == 'workflow_dispatch' && inputs.version != '' && {by_the_owner}"
+    # a trial must not push a waiting release out of the queue
+    assert "concurrency" not in workflow("release.yml")
+    assert jobs["publish"]["concurrency"] == {"group": "release-publish", "cancel-in-progress": False}
+
+
+def test_the_job_that_builds_a_release_cannot_publish_and_the_job_that_publishes_runs_no_code():
+    jobs = workflow("release.yml")["jobs"]
+    assert jobs["plan"]["permissions"] == {"contents": "read"}
+    assert jobs["build"]["permissions"] == {"contents": "read"}
+    for name in ("plan", "build"):
+        checkout = next(s for s in steps(jobs[name]) if "actions/checkout" in s.get("uses", ""))
+        assert checkout["with"]["persist-credentials"] is False
+    publish = jobs["publish"]
+    assert publish["permissions"] == {"contents": "write"}
+    assert publish["needs"] == ["plan", "build"]
+    assert not any("actions/checkout" in s.get("uses", "") for s in steps(publish))
+    assert not any("packaging/" in s.get("run", "") or "uv " in s.get("run", "") for s in steps(publish))
+    assert jobs["build"]["if"] == "needs.plan.outputs.do == 'release' || needs.plan.outputs.do == 'trial'"
+
+
+def publish(tmp_path, tag_before="", broken=False):
+    """Run the publish step with a stand-in for gh. `tag_before` is the commit the tag marks beforehand.
+
+    Returns the exit code and what gh was asked to create.
+    """
+    step = next(s for s in steps(workflow("release.yml")["jobs"]["publish"]) if "gh release create" in s.get("run", ""))
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "Jewelcase-x86_64.AppImage").write_bytes(b"not really an AppImage")
+    digest = subprocess.run(["sha256sum", "Jewelcase-x86_64.AppImage"], cwd=dist, capture_output=True, text=True).stdout
+    (dist / "Jewelcase-x86_64.AppImage.sha256").write_text(digest)
+    (tmp_path / "tag").write_text(tag_before)
+    gh = tmp_path / "gh"
+    gh.write_text("""#!/bin/sh
+case "$1 $2" in
+  "api repos/someone/jewelcase/git/ref/tags/v0.2.0")
+    if [ -n "$GH_BROKEN" ]; then echo "gh: Bad Gateway (HTTP 502)" >&2; exit 1; fi
+    if [ -s "$GH_STATE/tag" ]; then cat "$GH_STATE/tag"; else echo "gh: Not Found (HTTP 404)" >&2; exit 1; fi ;;
+  "release create")
+    printf '%s\n' "$*" >> "$GH_STATE/created"
+    [ -s "$GH_STATE/tag" ] || printf '%s' "$GITHUB_SHA" > "$GH_STATE/tag" ;;      # an existing tag is kept
+  *) echo "unexpected: $*" >&2; exit 2 ;;
+esac
+""")
+    gh.chmod(0o755)
+    env = {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}", "GH_STATE": str(tmp_path), "GH_REPO": "someone/jewelcase",
+           "GH_BROKEN": "1" if broken else "", "VERSION": "0.2.0", "GITHUB_SHA": HEAD}
+    done = subprocess.run(["bash", "-eo", "pipefail", "-c", step["run"]], env=env, cwd=tmp_path, capture_output=True, text=True)
+    created = (tmp_path / "created").read_text() if (tmp_path / "created").exists() else ""
+    return done.returncode, created
+
+
+def test_the_release_is_published_under_a_new_tag_for_the_commit_that_was_built(tmp_path):
+    code, created = publish(tmp_path)
+    assert code == 0 and created.startswith("release create v0.2.0 ") and f"--target {HEAD}" in created
+    assert "Jewelcase-x86_64.AppImage" in created and "Jewelcase-x86_64.AppImage.sha256" in created
+
+
+def test_a_tag_planted_on_another_commit_stops_the_publishing(tmp_path):
+    """The automation may make tags. One made for a version before its release must not steer the release."""
+    assert publish(tmp_path, tag_before="c" * 40) == (1, "")
+
+
+def test_nothing_is_published_while_the_tag_cannot_be_read(tmp_path):
+    assert publish(tmp_path, broken=True) == (1, "")
+
+
+def test_a_second_try_may_use_the_tag_the_first_try_left_on_the_same_commit(tmp_path):
+    code, created = publish(tmp_path, tag_before=HEAD)
+    assert code == 0 and created.startswith("release create v0.2.0 ")
+
+
+def test_the_pull_request_that_raises_the_version_is_checked_like_any_other_and_merged_by_the_maintainer():
+    job = workflow("release.yml")["jobs"]["propose"]
+    script = next(s["run"] for s in steps(job) if "release_plan.py bump" in s.get("run", ""))
+    # the version is checked by the tested script before anything is named after it
+    assert script.index("release_plan.py bump") < script.index("git switch -c")
+    assert "gh workflow run tests.yml" in script and "gh workflow run gate.yml" in script
+    assert "gh pr merge" not in (WORKFLOWS / "release.yml").read_text()
+    assert gate.issue_number("release/v0.2.0") is None           # so the gate leaves it to the maintainer
+
+
+def test_tags_once_made_cannot_be_moved_or_deleted_by_the_automation():
+    setup = (SCRIPTS / "setup_repo.sh").read_text()
+    tags = setup[setup.index('"name": "tags"'):]
+    tags = tags[:tags.index("JSON")]
+    assert '{"type": "update"}' in tags and '{"type": "deletion"}' in tags
+    assert '"creation"' not in tags                               # the release workflow makes the tag
 
 
 def test_the_checks_main_requires_are_the_ones_the_workflows_report():

@@ -111,7 +111,8 @@ jobs:
                No links and no @mentions in them.
 
             Limits. Change only Python files under src/jewelcase and tests (test files are named
-            test_*.py), and README.md. A fix that needs any other file is not yours to make. Never
+            test_*.py), and README.md. Leave src/jewelcase/__init__.py alone: it states the version.
+            A fix that needs any other file is not yours to make. Never
             delete, rename, skip or loosen a test to get a green run. Keep it small: a fix, not a
             redesign, well under 500 changed lines.
 
