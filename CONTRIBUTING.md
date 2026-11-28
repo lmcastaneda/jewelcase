@@ -52,8 +52,8 @@ uv run pytest                   # everything that needs no handheld
 
 ## Releases
 
-The AppImage on the Releases page is built by a workflow when the maintainer pushes a version tag.
-Nothing automatic can create a release.
+The AppImage on the Releases page is built and published by a workflow when the version number on
+`main` is raised. Raising it is the maintainer's decision: that change never merges by itself.
 
 ## For the maintainer
 
@@ -64,8 +64,11 @@ Nothing automatic can create a release.
   it: the fix workflow has started the tests already, and their result is the status `tests`.
 - `main` only changes through pull requests. You can merge one that the gate turned down by using your
   bypass on the pull request page.
-- A release: set the version in `pyproject.toml` and `src/jewelcase/__init__.py` through a pull request,
-  then push the tag `v<version>`.
+- A release: on the Actions page choose **release**, **Run workflow**, and enter the new version (for
+  example `0.2.0`). A pull request appears that raises the version and lists what has merged since the
+  last release. Merging it builds and publishes the release. To release `main` as it is, without a new
+  version (the first release, or a second try), tick **publish** instead. With neither, the run is a
+  trial: it builds and checks the AppImage and publishes nothing.
 - Setting up a fresh copy of the repository: push `main`, run `.github/scripts/setup_repo.sh OWNER/REPO`,
   and follow the three steps it prints. Claude's token lives in an environment tied to `main`, so a
   workflow on any other branch cannot read it.

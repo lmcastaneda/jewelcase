@@ -43,6 +43,8 @@ def allowed(path) -> bool:
     if any(p in ("", ".", "..") for p in parts):
         return False
     name = parts[-1]
+    if path == "src/jewelcase/__init__.py":
+        return False            # it states the version, and raising the version is what releases
     if path.startswith("src/jewelcase/") and name.endswith(".py"):
         return True
     return (parts[0] == "tests" and name.startswith("test_") and name.endswith(".py")

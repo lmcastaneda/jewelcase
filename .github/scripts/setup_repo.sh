@@ -63,8 +63,8 @@ gh api -X POST "repos/$REPO/rulesets" --input - >/dev/null <<'JSON'
 }
 JSON
 
-# Tags: only administrators create, move or delete them. A release needs a tag, so nothing automatic
-# can publish one.
+# Tags: once made, only administrators can move or delete them. The release workflow makes the tag of a
+# release itself; what decides on a release is the version on main, which only the maintainer raises.
 gh api -X POST "repos/$REPO/rulesets" --input - >/dev/null <<'JSON'
 {
   "name": "tags",
@@ -72,7 +72,7 @@ gh api -X POST "repos/$REPO/rulesets" --input - >/dev/null <<'JSON'
   "enforcement": "active",
   "conditions": {"ref_name": {"include": ["~ALL"], "exclude": []}},
   "bypass_actors": [{"actor_id": 5, "actor_type": "RepositoryRole", "bypass_mode": "always"}],
-  "rules": [{"type": "creation"}, {"type": "update"}, {"type": "deletion"}]
+  "rules": [{"type": "update"}, {"type": "deletion"}]
 }
 JSON
 

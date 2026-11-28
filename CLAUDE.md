@@ -48,6 +48,7 @@ something can be undone, a toast for "done", an info bar for a condition that la
   `README.md`. That leaves out the automation (`.github/`, `tests/test_automation.py`), `packaging/`,
   `pyproject.toml`, `uv.lock`, the data files under `src/jewelcase/data`, test helpers and configuration,
   `LICENSE`, and the documents about how the project is run.
+- The version number (`pyproject.toml` and `src/jewelcase/__init__.py`). Raising it publishes a release.
 - A new dependency, a new use of the network, a new way of running other programs.
 - Anything about releases, the licence or the automation itself.
 
