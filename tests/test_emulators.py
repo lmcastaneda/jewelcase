@@ -57,7 +57,7 @@ def test_catalog_loads_and_has_device_packages():
     with_source = {p for p, e in cat.items() if e.source}
     assert with_source == {"com.armsx2", "com.flycast.emulator", "org.vita3k.emulator",
                            "io.github.lime3ds.android", "org.azahar_emu.azahar", "me.magnum.melonds",
-                           "aenu.aps3e"}
+                           "aenu.aps3e", "com.armsx3"}
     assert cat["com.armsx2"].name == "ARMSX2" and cat["com.armsx2"].systems == ("ps2",)
     assert all(e.source.kind == "github" for e in cat.values() if e.source)
 
@@ -87,7 +87,7 @@ def test_list_marks_system_and_disabled(dev):
     assert rows[:len(installed)] == installed and len(installed) == 4
     rest = {r.entry.package for r in rows[len(installed):]}
     assert rest == {"io.github.lime3ds.android", "org.azahar_emu.azahar", "me.magnum.melonds",
-                    "aenu.aps3e"}
+                    "aenu.aps3e", "com.armsx3"}
 
 
 def test_check_updates_parses_release(dev):
@@ -188,3 +188,24 @@ def test_aps3e_entry_picks_its_release_apk():
               {"name": "2.43.apk.sha256", "browser_download_url": "https://x/2.43.apk.sha256"},
               {"name": "2.43.apk", "browser_download_url": "https://x/2.43.apk"}]
     assert emu._choose_asset(entry.source, assets, 34) == ("https://x/2.43.apk", "")
+
+
+def test_armsx3_entry_picks_the_build_for_the_handhelds_android_level():
+    entry = emu.load_catalog()["com.armsx3"]
+    assert entry.name == "ARMSX3" and entry.systems == ("ps3",)
+    assert entry.source.repo == "ARMSX2/ARMSX3"
+    assets = [{"name": n, "browser_download_url": f"https://x/{n}"}
+              for n in ("ARMSX3-1.7.3-a11-armv8.2-sdk30.apk", "ARMSX3-1.7.3-a13-armv8.2-sdk33.apk",
+                        "ARMSX3-1.7.3-a15-armv8.2-sdk35.apk", "ARMSX3-1.7.3-legacy-armv8.1-sdk30.apk")]
+    assert emu._choose_asset(entry.source, assets, 34) == ("https://x/ARMSX3-1.7.3-a13-armv8.2-sdk33.apk", "")
+    a11 = ("https://x/ARMSX3-1.7.3-a11-armv8.2-sdk30.apk", "")
+    assert emu._choose_asset(entry.source, assets, 30) == a11
+    assert emu._choose_asset(entry.source, assets[::-1], 30) == a11      # never the legacy build, in any order
+    assert emu._choose_asset(entry.source, assets, 29) == (
+        None, "the latest release has no build for this Android version")
+
+
+def test_an_armsx3_release_with_only_an_iphone_build_offers_nothing_to_install():
+    source = emu.load_catalog()["com.armsx3"].source
+    assets = [{"name": "ARMSX3-0.0.4.ipa", "browser_download_url": "https://x/ARMSX3-0.0.4.ipa"}]
+    assert emu._choose_asset(source, assets, 34) == (None, "the latest release has no Android build")
