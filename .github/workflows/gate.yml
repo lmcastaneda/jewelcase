@@ -133,6 +133,9 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # the fix workflow starts the review as the workflows' own bot, which the action otherwise
+          # turns away; this job runs only when the gate was started that way, never from a pull request
+          allowed_bots: "github-actions[bot]"
           prompt: |
             Review pull request #${{ needs.rules.outputs.pr }} of ${{ github.repository }} and give a
             verdict. Read CLAUDE.md in the repository root first (the root is the main branch). The

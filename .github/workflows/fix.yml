@@ -84,6 +84,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # the issue is a stranger's text: this also keeps tokens away from the programs Claude starts
           allowed_non_write_users: "*"
+          # triage starts this workflow as the workflows' own bot, which the action otherwise turns away;
+          # nobody outside can start it (by hand, from triage or on the clock only)
+          allowed_bots: "github-actions[bot]"
           settings: |
             {"env": {"BASH_DEFAULT_TIMEOUT_MS": "1500000", "BASH_MAX_TIMEOUT_MS": "2400000"}}
           prompt: |
