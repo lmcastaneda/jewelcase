@@ -414,4 +414,3 @@ Jewelcase is free software under the [GNU General Public License](LICENSE), vers
 3. Reading game IDs from CD-type CHDs; converting a multi-disc game the library has as loose discs.
 4. Restoring a single save from another handheld's set in the window (the command line can).
 5. Polish for syncing over Wi-Fi only.
-6. Pinning the tools the release build downloads (uv, appimagetool) to exact versions and checksums.
