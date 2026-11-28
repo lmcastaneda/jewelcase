@@ -52,7 +52,11 @@ uv pip install --python /tmp/venv/bin/python pyinstaller >/dev/null
 cd /tmp/dist/jewelcase/_internal
 rm -f libstdc++.so.6 libgcc_s.so.1 libz.so.1 libfontconfig.so.1 libfreetype.so.6 libexpat.so.1 \
       libGL.so.1 libEGL.so.1 libGLX.so.0 libGLdispatch.so.0 libOpenGL.so.0 libdrm.so.2 libgbm.so.1 \
-      libX11.so.6 libX11-xcb.so.1 libxcb.so.1 libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0
+      libX11.so.6 libX11-xcb.so.1 libxcb.so.1 libglib-2.0.so.0 libgobject-2.0.so.0 libgio-2.0.so.0 \
+      libmount.so.1 libblkid.so.1 libselinux.so.1
+# (libmount, libblkid and libselinux are in the bundle only because libgio asks for them, and the
+#  host's libgio is the one that runs: an older libmount under a newer libgio stops Qt's GTK theme
+#  plugin from loading, so the window cannot follow a GNOME desktop's light or dark setting.)
 # (libgthread-2.0 and libgmodule-2.0 stay bundled: openSUSE ships them as separate packages that a
 #  minimal install lacks, and they are thin shims over the host's libglib.)
 

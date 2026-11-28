@@ -27,6 +27,13 @@ def run_fetch(tmp_path: Path, source: Path, sha256: str) -> subprocess.Completed
         capture_output=True, text=True)
 
 
+def removed_libraries() -> set[str]:
+    """The libraries the script takes out of the bundle so the host's are used."""
+    found = re.search(r"^cd /tmp/dist/jewelcase/_internal\n(?:#.*\n)*rm -f ((?:.*\\\n)*.*)$", script(), re.M)
+    assert found, "inside-container.sh removes no libraries from the bundle"
+    return set(found.group(1).replace("\\\n", " ").split())
+
+
 def test_the_build_script_is_valid_shell():
     assert subprocess.run(["bash", "-n", str(SCRIPT)]).returncode == 0
 
@@ -61,3 +68,9 @@ def test_every_tool_the_build_downloads_comes_from_an_exact_version_with_its_sha
         version = re.search(r"/download/\$\{?([A-Z0-9_]+_VERSION)\}?/", url)
         assert version and re.fullmatch(r"\d+(\.\d+)+", pinned.get(version.group(1), "")), url
         assert re.fullmatch(r"[0-9a-f]{64}", pinned.get(sha.strip('"').strip("${}"), "")), sha
+
+
+def test_the_build_leaves_out_the_libraries_that_only_the_hosts_glib_asks_for():
+    removed = removed_libraries()
+    assert "libgio-2.0.so.0" in removed  # the host's GLib, which asks for the three below
+    assert {"libmount.so.1", "libblkid.so.1", "libselinux.so.1"} <= removed, removed
