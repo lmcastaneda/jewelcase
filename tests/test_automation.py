@@ -544,6 +544,10 @@ def allowed_tools(step):
     return re.search(r'--allowedTools "([^"]*)"', step["with"]["claude_args"]).group(1).split(",")
 
 
+def disallowed_tools(step):
+    return re.search(r'--disallowedTools "([^"]*)"', step["with"]["claude_args"]).group(1).split(",")
+
+
 def test_every_workflow_starts_with_no_permissions_and_grants_them_per_job():
     for file, name, job, doc in all_jobs():
         assert doc.get("permissions") == {}, f"{file} must start from `permissions: {{}}`"
@@ -596,6 +600,8 @@ def test_a_job_where_claude_reads_strangers_text_can_write_nothing_but_issue_lab
         assert step["with"]["github_token"] == "${{ secrets.GITHUB_TOKEN }}"
         assert "--permission-mode" in step["with"]["claude_args"]
         assert "Read(//proc/**)" in step["with"]["claude_args"]
+        # this is what keeps tokens away from the programs Claude starts
+        assert step["with"].get("allowed_non_write_users") == "*", f"{file}:{name}"
         for s in steps(job):
             if "actions/checkout" in s.get("uses", ""):
                 assert (s.get("with") or {}).get("persist-credentials") is False, f"{file}:{name}"
@@ -626,6 +632,15 @@ def test_the_reviewer_can_only_look():
     assert all(t in ("Read", "Grep", "Glob") or t.startswith(("Bash(gh pr view:", "Bash(gh pr diff:",
                                                               "Bash(gh issue view:"))
                for t in allowed_tools(step)), allowed_tools(step)
+
+
+def test_the_reviewer_cannot_have_gh_evaluate_an_expression():
+    """gh shows what it is asked for; it is not asked to work anything out with a filter or a template."""
+    step, = claude_steps(workflow("gate.yml")["jobs"]["review"])
+    denied = disallowed_tools(step)
+    for rule in ("Bash(gh * --jq*)", "Bash(gh * -q*)", "Bash(gh * --template*)", "Bash(gh * -t*)"):
+        assert rule in denied, denied
+    assert "Read(//proc/**)" in denied
 
 
 def test_the_reviewer_runs_on_the_model_the_maintainer_chose_and_triage_and_the_fix_on_the_default():
