@@ -60,6 +60,8 @@ Nothing automatic can create a release.
 - Write `@claude` in a comment on an issue or in a pull request's conversation to ask Claude for
   something there. Read the thread first: Claude reads all of it, whoever wrote it.
 - The label `hold` on a pull request or on its issue stops it merging by itself, also after it was approved.
+- On one of Claude's pull requests GitHub shows a run of the tests that waits for your approval. Leave
+  it: the fix workflow has started the tests already, and their result is the status `tests`.
 - `main` only changes through pull requests. You can merge one that the gate turned down by using your
   bypass on the pull request page.
 - A release: set the version in `pyproject.toml` and `src/jewelcase/__init__.py` through a pull request,
