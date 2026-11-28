@@ -85,9 +85,9 @@ def test_devices_needs_the_library(run):
 
 # ---------------------------------------------------------------- restoring from another handheld
 def test_restore_everything_from_another_handheld_and_undo(run):
-    run("saves", "backup")
+    first = run("--json", "saves", "backup").json["run"]
     own_before = run.read(CC)
-    stamps = make_set(run.demo, {"/" + CC: b"progress from the old handheld"})
+    make_set(run.demo, {"/" + CC: b"progress from the old handheld"})
     out = run("--json", "saves", "restore", "--all", "--from", OLD, "--yes").json
     assert out["restored"] == [KEY] and out["failed"] == []
     assert run.read(CC) == b"progress from the old handheld"
@@ -97,7 +97,9 @@ def test_restore_everything_from_another_handheld_and_undo(run):
     assert (other / "latest" / "retroarch-saves" / "Chrono Compass (USA).srm").read_bytes() \
         == b"progress from the old handheld"
     assert not (other / "history").exists()
-    assert out["undo_run"] > stamps[0]
+    # the undo point is a new run of this handheld's own set, later than its last one. (It says nothing
+    # about the other handheld's runs: two sets may well hold a run made in the same second.)
+    assert out["undo_run"] > first
     undo = run("--json", "saves", "restore", KEY, "--at", out["undo_run"], "--yes").json
     assert undo["restored"] == [KEY] and run.read(CC) == own_before
 
