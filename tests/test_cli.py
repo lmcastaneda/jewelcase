@@ -294,6 +294,16 @@ def test_an_unknown_list_is_refused_and_names_the_choices(capsys, demo, with_lis
     assert code == 2 and "No such list" in out
 
 
+def test_an_unknown_system_is_refused_and_names_the_choices(capsys, demo):
+    code, out = run(capsys, demo, "games", "--system", "nothing-like-it")
+    assert code == 2 and "No such system" in out and "ps2" in out
+
+
+def test_a_known_system_without_games_still_says_no_games(capsys, demo):
+    code, out = run(capsys, demo, "games", "--system", "atarijaguar")
+    assert code == 0 and "No games." in out
+
+
 def test_untick_list_takes_the_owners_lists(capsys, demo, with_lists):
     chosen = {g["key"] for g in run_json(capsys, demo, "games", "--list", "Pocket Sized")}
     code, out = run(capsys, demo, "untick", "--list", "Pocket Sized")

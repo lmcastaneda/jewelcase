@@ -7,7 +7,7 @@ import sys
 from dataclasses import asdict
 
 from . import __version__
-from .core import catalog, smartlists
+from .core import catalog, smartlists, systems
 from .core.catalog import GameRow
 from .core.fmt import human_size, human_time
 from .core.plan import SyncPlan, with_copy_first
@@ -100,6 +100,11 @@ def cmd_status(s: Session, args) -> int:
 
 def cmd_games(s: Session, args) -> int:
     rows = s.rows()
+    if args.system:
+        # Known systems, plus any other folder the library or handheld really has.
+        names = sorted(systems.known_folders() | {r.system for r in rows})
+        if args.system not in names:
+            raise SystemExit(f"No such system: {args.system}. Systems: {', '.join(names)}")
     if args.list:
         rows = _smart(s, rows, args.list)
     if args.system:
