@@ -1,7 +1,10 @@
 """Adding the packaged app to the desktop's applications menu."""
 from __future__ import annotations
 
+import contextlib
 import os
+import shutil
+import subprocess
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -55,24 +58,55 @@ def appimage_path() -> Path | None:
     return Path(value) if value and Path(value).is_file() else None
 
 
-def _paths(home: Path) -> tuple[Path, Path]:
-    share = Path(home) / ".local/share"
+def menu_entry_paths(home: Path | None = None) -> tuple[Path, Path]:
+    """The applications menu entry and its icon, under the home folder."""
+    share = Path(home or Path.home()) / ".local/share"
     return share / "applications/jewelcase.desktop", share / "icons/hicolor/scalable/apps/jewelcase.svg"
 
 
 def menu_entry_installed(home: Path | None = None) -> bool:
-    return _paths(home or Path.home())[0].exists()
+    return menu_entry_paths(home)[0].exists()
 
 
 def install_menu_entry(exe: Path, home: Path | None = None) -> Path:
-    desktop, icon = _paths(home or Path.home())
+    desktop, icon = menu_entry_paths(home)
     desktop.parent.mkdir(parents=True, exist_ok=True)
     icon.parent.mkdir(parents=True, exist_ok=True)
-    icon.write_text(ICON.read_text(encoding="utf-8"), encoding="utf-8")
-    desktop.write_text(_DESKTOP.format(exe=exe), encoding="utf-8")
+    _write_in_place(icon, ICON.read_text(encoding="utf-8"))
+    _write_in_place(desktop, _DESKTOP.format(exe=exe))
+    refresh_icon_cache(home)
     return desktop
 
 
+def _write_in_place(path: Path, text: str) -> None:
+    """Write under a temporary name in the same folder, check it, then give it its real name."""
+    tmp = path.with_name(path.name + ".jewelcase-tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        if tmp.read_text(encoding="utf-8") != text:
+            raise OSError(f"{tmp} did not read back as it was written")
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def refresh_icon_cache(home: Path | None = None) -> None:
+    """Make the desktop see the icon. Best effort: it never fails.
+
+    GTK ignores an icon-theme.cache older than its folder, so touching the folder is enough where
+    gtk-update-icon-cache is missing. A cache the user did not have is not created.
+    """
+    hicolor = Path(home or Path.home()) / ".local/share/icons/hicolor"
+    with contextlib.suppress(OSError):
+        os.utime(hicolor)
+    tool = shutil.which("gtk-update-icon-cache")
+    if tool is None or not (hicolor / "icon-theme.cache").exists():
+        return
+    with contextlib.suppress(OSError, subprocess.SubprocessError):     # a non-zero exit is ignored too
+        subprocess.run([tool, "-f", "-t", str(hicolor)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL, timeout=10)
+
+
 def remove_menu_entry(home: Path | None = None) -> None:
-    for p in _paths(home or Path.home()):
+    for p in menu_entry_paths(home):
         p.unlink(missing_ok=True)

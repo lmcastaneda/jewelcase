@@ -7,7 +7,7 @@ import sys
 from dataclasses import asdict
 
 from . import __version__
-from .core import catalog, smartlists
+from .core import catalog, integrate, smartlists
 from .core.catalog import GameRow
 from .core.fmt import human_size, human_time
 from .core.plan import SyncPlan, with_copy_first
@@ -280,6 +280,23 @@ def cmd_gui(s: Session, args) -> int:
                view=getattr(args, "view", None), theme=getattr(args, "theme", None))
 
 
+def cmd_install_menu_entry(args) -> int:
+    """Add the AppImage to the applications menu, or repair its entry and icon; the demo only names them."""
+    desktop, icon = integrate.menu_entry_paths()
+    if args.demo or args.demo_dir:
+        written, said = False, "Demo: nothing was written."
+    else:
+        exe = integrate.appimage_path()
+        if exe is None:
+            said = "Only the AppImage can add itself to the applications menu."
+            _out(args, {"written": False, "error": said}, said)
+            return 2
+        integrate.install_menu_entry(exe)
+        written, said = True, "Jewelcase was added to the applications menu."
+    _out(args, {"written": written, "desktop": str(desktop), "icon": str(icon)}, f"{said}\n  {desktop}\n  {icon}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="jewelcase", description="Manage games and emulators on an Android handheld.")
     ap.add_argument("--version", action="version", version=f"jewelcase {__version__}")
@@ -341,6 +358,7 @@ def build_parser() -> argparse.ArgumentParser:
     dv.add_argument("--games-folder", metavar="PATH", help="use this folder on the device as the games folder")
     dv.add_argument("--detect", action="store_true", help="forget the folder you set and detect it again")
     sub.add_parser("bios", help="which BIOS files are on the handheld, per system (it only looks)")
+    sub.add_parser("install-menu-entry", help="add Jewelcase to the applications menu, or repair its entry and icon")
     gui = sub.add_parser("gui", help="open the window (the default)")
     gui.add_argument("--screenshot", metavar="PNG")
     gui.add_argument("--selftest", action="store_true")
@@ -352,6 +370,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     cmd = args.cmd or "gui"
+    if cmd == "install-menu-entry":
+        return cmd_install_menu_entry(args)        # no session: it needs no device, library or settings
     s = open_session(demo_dir=args.demo_dir, use_demo=args.demo, library=args.library, card=args.card)
     if cmd == "gui":
         return cmd_gui(s, args)
