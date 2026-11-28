@@ -70,6 +70,14 @@ def test_tick_without_keys_or_list_says_what_to_name(capsys, demo):
     assert code == 2
 
 
+@pytest.mark.parametrize("cmd", ["tick", "untick"])
+def test_game_keys_beside_a_list_are_refused_and_nothing_changes(capsys, demo, cmd):
+    code, out = run(capsys, demo, cmd, "--list", "never_played", "ps2/No Such Game")
+    assert code == 2 and "--list" in out
+    plan = run_json(capsys, demo, "plan")
+    assert plan["remove"] == [] and plan["add"] == []
+
+
 def test_tick_unknown_key_fails(capsys, demo):
     code, out = run(capsys, demo, "tick", "ps2/No Such Game")
     assert code == 2
