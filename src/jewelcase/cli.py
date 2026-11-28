@@ -368,6 +368,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    integrate.use_host_libraries()                 # first, before any thread or program is started
     args = build_parser().parse_args(argv)
     cmd = args.cmd or "gui"
     if cmd == "install-menu-entry":
