@@ -180,7 +180,7 @@ jobs:
     needs: [rules, review]
     if: always() && needs.rules.outputs.next == 'review'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30      # it waits for the tests, to close the issue once the fix has merged
     permissions:
       contents: write        # merging
       pull-requests: write
@@ -221,6 +221,15 @@ jobs:
             status success "Reviewed and approved"
             gh pr comment "$PR" --body "$(printf 'Reviewed and approved. This merges by itself once the tests pass.\n\n%s' "$summary")"
             gh pr merge "$PR" --auto --squash --match-head-commit "$SHA"
+            # GitHub does not close the issue when a pull request opened by a workflow merges, and that
+            # merge starts no workflow either. So wait for it here and then close the issue. If the tests
+            # take longer or fail, the fix workflow closes the issue the next time it runs.
+            for _ in $(seq 1 80); do
+              state=$(gh pr view "$PR" --json state --jq .state || echo OPEN)
+              [ "$state" = "OPEN" ] || break
+              sleep 15
+            done
+            if [ "$state" = "MERGED" ]; then python3 .github/scripts/pick_issue.py tidy; fi
           else
             gh pr merge "$PR" --disable-auto || true
             status failure "Waits for the maintainer"

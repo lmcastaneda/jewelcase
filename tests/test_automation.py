@@ -318,6 +318,46 @@ def test_no_new_fix_starts_while_enough_are_waiting_or_enough_were_made_today():
     assert not pick.may_start(0, pick.MAX_PER_DAY)
 
 
+def merged(number, branch, **over):
+    base = {"number": number, "headRefName": branch, "isCrossRepository": False, "baseRefName": "main",
+            "author": {"login": "app/github-actions", "is_bot": True}}
+    return {**base, **over}
+
+
+def test_an_issue_whose_fix_has_merged_is_done():
+    """GitHub does not close the issue when a pull request opened by a workflow merges, so this does."""
+    issues = [issue(4, "bug", "claude:working"), issue(5, "bug", "claude:working"), issue(6, "bug")]
+    prs = [merged(10, "claude/issue-4"), merged(11, "claude/issue-6"), merged(12, "something-else")]
+    assert pick.fixed(issues, prs) == [(4, 10)]         # 5 has no merged fix; nobody was working on 6
+
+
+def test_only_claudes_own_merged_fix_closes_an_issue_not_a_look_alike():
+    issues = [issue(4, "claude:working")]
+    for odd in (merged(10, "claude/issue-4", isCrossRepository=True),                       # from a fork
+                merged(10, "claude/issue-4", baseRefName="some-branch"),                    # not into main
+                merged(10, "claude/issue-4", author={"login": "somebody", "is_bot": False}),
+                merged(10, "claude/issue-44"), merged(10, "x/claude/issue-4"), {}):
+        assert pick.fixed(issues, [odd]) == []
+
+
+def test_a_fixed_issue_is_closed_with_a_word_and_no_longer_marked_as_taken(monkeypatch):
+    calls = []
+
+    def gh(*args):
+        calls.append(args)
+        if args[:2] == ("issue", "list"):
+            return json.dumps([issue(4, "bug", "claude:working"), issue(5, "claude:working")])
+        if args[:2] == ("pr", "list"):
+            return json.dumps([merged(10, "claude/issue-4")])
+        return ""
+
+    monkeypatch.setattr(pick, "_gh", gh)
+    assert pick.tidy() == [(4, 10)]
+    changes = [c for c in calls if c[1] in ("close", "edit")]
+    assert changes == [("issue", "close", "4", "--comment", "Fixed by pull request #10, which has been merged."),
+                       ("issue", "edit", "4", "--remove-label", "claude:working")]
+
+
 # ---------------------------------------------------------------- the workflow files
 def workflow(name):
     doc = yaml.safe_load((WORKFLOWS / name).read_text())
@@ -485,6 +525,16 @@ def report(tmp_path, result, sha="a" * 40):
     done = subprocess.run(["bash", "-eo", "pipefail", "-c", step["run"]], env=env, capture_output=True, text=True)
     assert done.returncode == 0, done.stderr
     return log.read_text() if log.exists() else ""
+
+
+def test_fixed_issues_are_closed_right_after_the_merge_and_again_whenever_a_fix_is_picked():
+    """The gate waits for the pull request it approved to merge and then tidies up. A pull request that
+    merges later (its tests were run again) is caught the next time the fix workflow runs."""
+    merge = workflow("gate.yml")["jobs"]["merge"]
+    script = next(s["run"] for s in steps(merge) if "merge_gate.py decide" in s.get("run", ""))
+    assert script.index("gh pr merge \"$PR\" --auto") < script.index("pick_issue.py tidy")
+    assert merge["permissions"]["issues"] == "write"
+    assert "tidy()" in (SCRIPTS / "pick_issue.py").read_text().split("def main()")[1]
 
 
 def test_the_tests_started_for_one_of_claudes_fixes_report_their_result_as_a_status():
