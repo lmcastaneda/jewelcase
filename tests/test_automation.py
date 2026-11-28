@@ -628,6 +628,14 @@ def test_the_reviewer_can_only_look():
                for t in allowed_tools(step)), allowed_tools(step)
 
 
+def test_the_reviewer_runs_on_the_model_the_maintainer_chose_and_triage_and_the_fix_on_the_default():
+    models = {(file, name): re.findall(r"--model\s+(\S+)", step["with"]["claude_args"])
+              for file, name in (("triage.yml", "triage"), ("fix.yml", "write"), ("gate.yml", "review"))
+              for step in claude_steps(workflow(file)["jobs"][name])}
+    assert models == {("triage.yml", "triage"): [], ("fix.yml", "write"): [],
+                      ("gate.yml", "review"): ["claude-fable-5-2"]}
+
+
 def test_claude_runs_for_the_workflows_own_bot_where_one_workflow_starts_another_and_for_no_other_bot():
     """Triage starts the fix and the fix starts the review, both as the workflows' own bot, and the action
     refuses a bot it was not told about. Only a job that nobody outside can start may name that bot."""
