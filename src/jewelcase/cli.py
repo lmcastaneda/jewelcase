@@ -392,6 +392,9 @@ def main(argv: list[str] | None = None) -> int:
             if not args.keys and not args.list:
                 print("Name games or use --list.")
                 return 2
+            if args.keys and args.list:
+                print("Name games or use --list, not both.")
+                return 2
             return cmd_tick(s, args, cmd == "tick")
         if cmd == "lists":
             return cmd_lists(s, args)
