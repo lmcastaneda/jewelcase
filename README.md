@@ -317,7 +317,7 @@ The same engine without the window, for scripts and for AI agents. Add `--json` 
 jewelcase status                                           # device, storage, library, pending changes
 jewelcase games --list never_played                        # or --system ps2
 jewelcase untick --list never_played                       # or: jewelcase untick "ps2/God of War II (USA)"
-jewelcase tick "gba/Golden Sun (USA, Europe)"
+jewelcase tick "gba/Golden Sun (USA, Europe)"                # or: jewelcase tick --list never_played
 jewelcase plan                                             # what a sync would do
 jewelcase sync --yes                                       # do it (add --copy-first for device-only games)
 jewelcase sync --resume                                    # carry on with a sync that was interrupted
