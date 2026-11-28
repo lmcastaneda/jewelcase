@@ -864,3 +864,51 @@ def test_the_checks_main_requires_are_the_ones_the_workflows_report():
     assert '"context": "tests"' in setup and "tests" in workflow("tests.yml")["jobs"]
     assert "context=tests" in (WORKFLOWS / "tests.yml").read_text()
     assert '"context": "gate"' in setup and "context=gate" in (WORKFLOWS / "gate.yml").read_text()
+
+
+# ---------------------------------------------------------------- a triage that fails
+HANDED_OVER = "Claude could not read this issue, so it waits for the maintainer."
+
+
+def hand_over(tmp_path, *labels):
+    """Run the step that hands a failed triage to the maintainer, with a stand-in for gh that says the
+    issue carries `labels`. Returns what the step asked gh to do, one call per line."""
+    job = workflow("triage.yml")["jobs"]["triage"]
+    step = next((s for s in steps(job) if s.get("name") == "If Claude's step failed, hand the issue over"), None)
+    assert step is not None, "the job triage has no step that hands a failed triage over"
+    log = tmp_path / "gh.log"
+    gh = tmp_path / "gh"
+    # `gh issue view --jq` prints what the query makes of the labels: their names, separated by spaces
+    gh.write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "$GH_LOG"\n'
+                  'case "$1 $2" in "issue view") printf "%s\\n" "$GH_LABELS" ;; esac\n')
+    gh.chmod(0o755)
+    env = {"PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}", "GH_LOG": str(log), "GH_LABELS": " ".join(labels),
+           "GH_TOKEN": "not-a-token", "GH_REPO": "someone/jewelcase", "ISSUE_NUMBER": "7"}
+    done = subprocess.run(["bash", "-eo", "pipefail", "-c", step["run"]], env=env, capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
+    return log.read_text().splitlines()
+
+
+def test_when_triage_fails_the_issue_is_handed_to_the_maintainer_with_one_fixed_sentence(tmp_path):
+    calls = hand_over(tmp_path, "bug")
+    assert "issue edit 7 --add-label needs-maintainer" in calls
+    comments = [c for c in calls if c.startswith("issue comment")]
+    assert comments == [f"issue comment 7 --body {HANDED_OVER}"]
+
+
+def test_a_second_failure_on_an_issue_that_already_waits_for_the_maintainer_adds_no_second_comment(tmp_path):
+    calls = hand_over(tmp_path, "bug", "needs-maintainer")
+    assert not [c for c in calls if c.startswith("issue comment")]
+    assert all(c.startswith(("issue view 7 ", "issue edit 7 ")) for c in calls), calls
+
+
+def test_the_step_that_hands_a_failed_triage_over_runs_last_on_failure_or_on_a_cancelled_job_and_claudes_step_times_out_before_the_job_does():
+    """A step that times out has failed, which starts the hand-over; the job's last minutes are for it."""
+    job = workflow("triage.yml")["jobs"]["triage"]
+    names = [s.get("name") for s in steps(job)]
+    assert names[-2:] == ["If Claude's step failed, say why", "If Claude's step failed, hand the issue over"]
+    last = steps(job)[-1]
+    assert last["if"] == "failure() || cancelled()"
+    assert "${{" not in last["run"] and "env" not in last    # only the job's GH_TOKEN, GH_REPO and ISSUE_NUMBER
+    step, = claude_steps(job)
+    assert step["timeout-minutes"] == 12 and job["timeout-minutes"] == 15

@@ -61,6 +61,8 @@ jobs:
           fi
       - name: Claude reads the issue
         if: steps.quota.outputs.ok == 'true'
+        # before the job's own limit, so that the last step still has time to hand the issue over
+        timeout-minutes: 12
         uses: anthropics/claude-code-action@4411a9e9b0283becf4b924f7bce360fd7756c78c # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -120,6 +122,16 @@ jobs:
         run: |
           jq -r '[.[]? | select(.type == "result")] | last | .result // "no message"' \
             "$RUNNER_TEMP/claude-execution-output.json" 2>/dev/null | head -c 2000 || true
+      # Otherwise nobody hears of the issue again. The words are fixed: nothing from Claude or the issue.
+      - name: If Claude's step failed, hand the issue over
+        if: failure() || cancelled()
+        run: |
+          labels=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(" ")')
+          gh issue edit "$ISSUE_NUMBER" --add-label needs-maintainer
+          case " $labels " in
+            *" needs-maintainer "*) echo "The issue waits for the maintainer already." ;;
+            *) gh issue comment "$ISSUE_NUMBER" --body "Claude could not read this issue, so it waits for the maintainer." ;;
+          esac
 
   # If triage marked the issue ready, start the fix at once instead of waiting for the next scheduled run.
   handoff:
